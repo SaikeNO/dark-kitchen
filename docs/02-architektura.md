@@ -2,7 +2,6 @@
 
 ```mermaid
 graph TD
-graph TD
     %% Warstwa Zewnętrzna
     subgraph External_Entry [Zewnętrzne Źródła Zamówień]
         Glovo[<b>Glovo</b><br/>Webhook API]
