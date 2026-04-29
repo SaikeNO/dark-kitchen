@@ -11,10 +11,6 @@ on:
     - cron: "17 4 * * 1"
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.language }}
-  cancel-in-progress: true
-
 permissions:
   actions: read
   contents: read
@@ -30,6 +26,9 @@ jobs:
   analyze:
     name: analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.language }}
+      cancel-in-progress: true
 
     strategy:
       fail-fast: false
