@@ -1,0 +1,23 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.2.4">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>dark-kitchen-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Services\DarkKitchen.Catalog.Api\DarkKitchen.Catalog.Api.csproj" />
+    <ProjectReference Include="..\Services\DarkKitchen.Inventory.Api\DarkKitchen.Inventory.Api.csproj" />
+    <ProjectReference Include="..\Services\DarkKitchen.OrderManagement.Api\DarkKitchen.OrderManagement.Api.csproj" />
+    <ProjectReference Include="..\Services\DarkKitchen.Storefront.Api\DarkKitchen.Storefront.Api.csproj" />
+    <ProjectReference Include="..\Services\DarkKitchen.Kds.Api\DarkKitchen.Kds.Api.csproj" />
+    <ProjectReference Include="..\Services\DarkKitchen.Packing.Api\DarkKitchen.Packing.Api.csproj" />
+  </ItemGroup>
+</Project>

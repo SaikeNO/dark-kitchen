@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+TestResults/
+artifacts/
+*.user
+*.suo
+*.rsuser
+
+# Aspire and local CLI caches
+.aspire/
+.dotnet/
+.nuget/packages/
+.templateengine/
+
+# Node
+node_modules/
+dist/
+coverage/
+.npm-cache/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

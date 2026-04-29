@@ -1,0 +1,43 @@
+{
+  "name": "dark-kitchen",
+  "private": true,
+  "workspaces": [
+    "src/Web/admin-panel",
+    "src/Web/storefront",
+    "src/Web/kitchen-app",
+    "src/Web/packing-terminal"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "lint": "eslint . --max-warnings=0 && npm run typecheck",
+    "lint:fix": "eslint . --fix",
+    "test": "npm run test:frontend",
+    "test:all": "npm run test:dotnet && npm run test:frontend && npm run test:e2e",
+    "test:architecture": "dotnet test tests/DarkKitchen.ArchitectureTests/DarkKitchen.ArchitectureTests.csproj",
+    "test:contracts": "dotnet test tests/DarkKitchen.ContractTests/DarkKitchen.ContractTests.csproj",
+    "test:dotnet": "dotnet test DarkKitchen.slnx",
+    "test:e2e": "dotnet build src/DarkKitchen.AppHost/DarkKitchen.AppHost.csproj --no-restore -p:UseSharedCompilation=false -m:1 && playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:report": "playwright show-report artifacts/playwright-report",
+    "test:frontend": "npm run test --workspaces -- --run",
+    "test:integration": "dotnet test tests/DarkKitchen.IntegrationTests/DarkKitchen.IntegrationTests.csproj",
+    "typecheck": "npm run typecheck --workspaces",
+    "dev:admin": "npm --workspace @dark-kitchen/admin-panel run dev",
+    "dev:storefront": "npm --workspace @dark-kitchen/storefront run dev",
+    "dev:kitchen": "npm --workspace @dark-kitchen/kitchen-app run dev",
+    "dev:packing": "npm --workspace @dark-kitchen/packing-terminal run dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^24.12.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "typescript-eslint": "^8.59.1"
+  }
+}

@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DarkKitchen.AppHost/DarkKitchen.AppHost.csproj" />
+    <Project Path="src/DarkKitchen.ServiceDefaults/DarkKitchen.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/DarkKitchen.Contracts/DarkKitchen.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/DarkKitchen.Catalog.Api/DarkKitchen.Catalog.Api.csproj" />
+    <Project Path="src/Services/DarkKitchen.Inventory.Api/DarkKitchen.Inventory.Api.csproj" />
+    <Project Path="src/Services/DarkKitchen.Kds.Api/DarkKitchen.Kds.Api.csproj" />
+    <Project Path="src/Services/DarkKitchen.OrderManagement.Api/DarkKitchen.OrderManagement.Api.csproj" />
+    <Project Path="src/Services/DarkKitchen.Packing.Api/DarkKitchen.Packing.Api.csproj" />
+    <Project Path="src/Services/DarkKitchen.Storefront.Api/DarkKitchen.Storefront.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DarkKitchen.ArchitectureTests/DarkKitchen.ArchitectureTests.csproj" />
+    <Project Path="tests/DarkKitchen.ContractTests/DarkKitchen.ContractTests.csproj" />
+    <Project Path="tests/DarkKitchen.IntegrationTests/DarkKitchen.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

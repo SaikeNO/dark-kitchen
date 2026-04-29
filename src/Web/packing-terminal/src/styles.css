@@ -1,0 +1,57 @@
+:root {
+  color: #191724;
+  background: #f2f0f7;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.workspace {
+  width: min(760px, 100%);
+}
+
+.eyebrow {
+  color: #6b4fb3;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 6vw, 4rem);
+}
+
+p {
+  max-width: 62ch;
+  line-height: 1.6;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+dt {
+  color: #6b4fb3;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+dd {
+  margin: 6px 0 0;
+  font-weight: 700;
+}
+

@@ -1,0 +1,52 @@
+import { expect, test } from "@playwright/test";
+
+const apps = [
+  {
+    name: "admin-panel",
+    url: "http://127.0.0.1:5173",
+    heading: "Admin Panel",
+    context: "Catalog & Recipe"
+  },
+  {
+    name: "storefront",
+    url: "http://127.0.0.1:5174",
+    heading: "Storefront",
+    context: "Direct Sales"
+  },
+  {
+    name: "kitchen-app",
+    url: "http://127.0.0.1:5175",
+    heading: "Kitchen App",
+    context: "KDS"
+  },
+  {
+    name: "packing-terminal",
+    url: "http://127.0.0.1:5176",
+    heading: "Packing Terminal",
+    context: "Packing"
+  }
+] as const;
+
+for (const app of apps) {
+  test(`${app.name} renders the first screen`, async ({ page }) => {
+    const browserErrors: string[] = [];
+
+    page.on("console", message => {
+      if (message.type() === "error") {
+        browserErrors.push(message.text());
+      }
+    });
+
+    page.on("pageerror", error => {
+      browserErrors.push(error.message);
+    });
+
+    await page.goto(app.url);
+
+    await expect(page.getByRole("heading", { name: app.heading })).toBeVisible();
+    await expect(page.getByText("Dark Kitchen", { exact: true })).toBeVisible();
+    await expect(page.locator("dd").getByText(app.context, { exact: true })).toBeVisible();
+    await expect(page.locator("dd").getByText("Foundation ready", { exact: true })).toBeVisible();
+    expect(browserErrors).toEqual([]);
+  });
+}

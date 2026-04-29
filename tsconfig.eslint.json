@@ -1,0 +1,9 @@
+{
+  "extends": "./src/Web/tsconfig.base.json",
+  "include": [
+    "playwright.config.ts",
+    "src/Web/**/*.ts",
+    "src/Web/**/*.tsx",
+    "tests/**/*.ts"
+  ]
+}
