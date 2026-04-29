@@ -55,7 +55,7 @@ public sealed class ProjectReferenceArchitectureTests
             .Descendants("ProjectReference")
             .Select(element => element.Attribute("Include")?.Value)
             .Where(include => !string.IsNullOrWhiteSpace(include))
-            .Select(include => Path.GetFullPath(Path.Combine(projectDirectory, include!)))
+            .Select(include => Path.GetFullPath(Path.Combine(projectDirectory, include!.Replace("\\", "/"))))
             .ToArray();
     }
 }
