@@ -1,5 +1,8 @@
 # Dark Kitchen
 
+[![CI](https://github.com/SaikeNO/dark-kitchen/actions/workflows/ci.yml/badge.svg)](https://github.com/SaikeNO/dark-kitchen/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/SaikeNO/dark-kitchen/actions/workflows/security.yml/badge.svg)](https://github.com/SaikeNO/dark-kitchen/actions/workflows/security.yml)
+
 Edukacyjny projekt MVP systemu dla wielomarkowej kuchni typu **dark kitchen**. Repozytorium służy do ćwiczenia architektury mikroserwisowej, komunikacji zdarzeniowej, testów integracyjnych z .NET Aspire oraz frontendów operacyjnych dla kuchni, pakowania i sprzedaży.
 
 Projekt jest na wczesnym etapie: obecnie zawiera fundament solution, AppHost Aspire, szkielety usług API, aplikacje React/Vite oraz skonfigurowane warstwy testów. Logika domenowa będzie rozwijana zgodnie z roadmapą w `docs`.
