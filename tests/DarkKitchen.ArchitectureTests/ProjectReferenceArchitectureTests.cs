@@ -21,11 +21,11 @@ public sealed class ProjectReferenceArchitectureTests
 
             Assert.Contains(
                 references,
-                reference => reference.EndsWith(@"DarkKitchen.ServiceDefaults\DarkKitchen.ServiceDefaults.csproj", StringComparison.OrdinalIgnoreCase));
+                reference => reference.EndsWith(Path.Combine("DarkKitchen.ServiceDefaults", "DarkKitchen.ServiceDefaults.csproj"), StringComparison.OrdinalIgnoreCase));
 
             Assert.DoesNotContain(
                 references,
-                reference => reference.Contains(@"\src\Services\", StringComparison.OrdinalIgnoreCase));
+                reference => reference.Contains(Path.Combine("src", "Services"), StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -56,6 +56,7 @@ public sealed class ProjectReferenceArchitectureTests
             .Select(element => element.Attribute("Include")?.Value)
             .Where(include => !string.IsNullOrWhiteSpace(include))
             .Select(include => Path.GetFullPath(Path.Combine(projectDirectory, include!.Replace("\\", "/"))))
+            .Select(path => path.Replace("\\", "/"))
             .ToArray();
     }
 }
