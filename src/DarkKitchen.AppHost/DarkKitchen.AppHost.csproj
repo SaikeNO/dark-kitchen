@@ -13,11 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Services\DarkKitchen.Catalog.Api\DarkKitchen.Catalog.Api.csproj" />
-    <ProjectReference Include="..\Services\DarkKitchen.Inventory.Api\DarkKitchen.Inventory.Api.csproj" />
-    <ProjectReference Include="..\Services\DarkKitchen.OrderManagement.Api\DarkKitchen.OrderManagement.Api.csproj" />
-    <ProjectReference Include="..\Services\DarkKitchen.Storefront.Api\DarkKitchen.Storefront.Api.csproj" />
-    <ProjectReference Include="..\Services\DarkKitchen.Kds.Api\DarkKitchen.Kds.Api.csproj" />
-    <ProjectReference Include="..\Services\DarkKitchen.Packing.Api\DarkKitchen.Packing.Api.csproj" />
+    <ProjectReference Include="..\Services\Catalog\DarkKitchen.Catalog.Api\DarkKitchen.Catalog.Api.csproj" />
+    <ProjectReference Include="..\Services\Inventory\DarkKitchen.Inventory.Api\DarkKitchen.Inventory.Api.csproj" />
+    <ProjectReference Include="..\Services\OrderManagement\DarkKitchen.OrderManagement.Api\DarkKitchen.OrderManagement.Api.csproj" />
+    <ProjectReference Include="..\Services\Storefront\DarkKitchen.Storefront.Api\DarkKitchen.Storefront.Api.csproj" />
+    <ProjectReference Include="..\Services\Kds\DarkKitchen.Kds.Api\DarkKitchen.Kds.Api.csproj" />
+    <ProjectReference Include="..\Services\Packing\DarkKitchen.Packing.Api\DarkKitchen.Packing.Api.csproj" />
   </ItemGroup>
 </Project>

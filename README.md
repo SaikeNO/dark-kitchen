@@ -72,7 +72,7 @@ Testy:
 |-- src/
 |   |-- DarkKitchen.AppHost/       # Orkiestracja lokalna przez .NET Aspire
 |   |-- DarkKitchen.ServiceDefaults/
-|   |-- Services/                  # Mikroserwisy API
+|   |-- Services/                  # Bounded contexts z projektami API i przyszłymi warstwami
 |   |-- Shared/                    # Wspólne kontrakty
 |   `-- Web/                       # Aplikacje React/Vite
 |-- tests/
@@ -137,6 +137,43 @@ AppHost uruchamia:
 
 Po starcie adres dashboardu pojawi się w konsoli.
 
+### Flagi AppHost
+
+AppHost obsługuje kilka flag konfiguracyjnych przekazywanych jako argumenty `dotnet run`:
+
+- `DarkKitchen:IncludeWebApps=false` - uruchamia tylko backend i infrastrukturę, bez aplikacji Vite.
+- `DarkKitchen:UsePersistentVolumes=false` - wyłącza trwałe wolumeny PostgreSQL i Redis, przydatne w testach.
+- `DarkKitchen:UseFixedWebPorts=true` - wymusza stałe porty aplikacji webowych `5173-5176`, używane przez Playwright.
+
+Przykład:
+
+```powershell
+dotnet run --project src/DarkKitchen.AppHost -- DarkKitchen:UsePersistentVolumes=false DarkKitchen:UseFixedWebPorts=true
+```
+
+## Konwencje Monorepo
+
+Usługi są grupowane według bounded context:
+
+```text
+src/Services/
+|-- Catalog/
+|   `-- DarkKitchen.Catalog.Api/
+|-- Inventory/
+|   `-- DarkKitchen.Inventory.Api/
+`-- ...
+```
+
+Docelowo każdy kontekst może dostać własne projekty `Application`, `Domain` i `Infrastructure`. AppHost referencjonuje tylko projekty `*.Api.csproj`; projekty domenowe i infrastrukturalne nie powinny referencjonować `DarkKitchen.ServiceDefaults`.
+
+Frontendy są zorganizowane jako npm workspaces. Wspólne elementy znajdują się w `src/Web/packages`:
+
+- `@dark-kitchen/ui` - współdzielony shell UI.
+- `@dark-kitchen/config` - konfiguracja klienta z `VITE_*`.
+- `@dark-kitchen/api-client` - podstawowe narzędzia dla klientów API.
+
+AppHost przekazuje frontendowi adres właściwego API przez `VITE_API_BASE_URL`. Dla produkcyjnego wdrożenia trzeba dodać osobny mechanizm serwowania zbudowanych assetów SPA, np. statyczny host, CDN albo dedykowany backend/static-file resource; Vite dev server pozostaje narzędziem lokalnym.
+
 ## Przydatne Komendy
 
 Frontend:
@@ -191,6 +228,12 @@ Testy E2E:
 ```powershell
 npm run test:e2e:install
 npm run test:e2e
+```
+
+Jeśli AppHost jest już uruchomiony na stałych portach, można pominąć krok build/start wykonywany przez skrypt główny:
+
+```powershell
+npm run test:e2e:reuse
 ```
 
 Playwright uruchamia AppHost w trybie E2E, z aplikacjami Vite na stałych portach:

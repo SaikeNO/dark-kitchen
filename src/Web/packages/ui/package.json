@@ -1,0 +1,20 @@
+{
+  "name": "@dark-kitchen/ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "npm run typecheck",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./app-shell.css": "./src/app-shell.css"
+  },
+  "peerDependencies": {
+    "react": "^19.2.5"
+  }
+}

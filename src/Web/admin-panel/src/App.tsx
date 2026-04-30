@@ -1,25 +1,13 @@
+import { createApiClient } from "@dark-kitchen/api-client";
+import { clientConfig } from "@dark-kitchen/config";
+import { AppShell } from "@dark-kitchen/ui";
+import "@dark-kitchen/ui/app-shell.css";
 import { appMetadata } from "./appMetadata";
 import "./styles.css";
 
+const apiClient = createApiClient(clientConfig.apiBaseUrl);
+
 export function App() {
-  return (
-    <main className="shell">
-      <section className="workspace">
-        <p className="eyebrow">Dark Kitchen</p>
-        <h1>{appMetadata.name}</h1>
-        <p>{appMetadata.description}</p>
-        <dl>
-          <div>
-            <dt>Kontekst</dt>
-            <dd>{appMetadata.context}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>Foundation ready</dd>
-          </div>
-        </dl>
-      </section>
-    </main>
-  );
+  return <AppShell metadata={appMetadata} apiConfigured={apiClient.isConfigured} />;
 }
 

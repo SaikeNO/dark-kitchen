@@ -2,6 +2,7 @@
   "name": "dark-kitchen",
   "private": true,
   "workspaces": [
+    "src/Web/packages/*",
     "src/Web/admin-panel",
     "src/Web/storefront",
     "src/Web/kitchen-app",
@@ -20,7 +21,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:report": "playwright show-report artifacts/playwright-report",
-    "test:frontend": "npm run test --workspaces -- --run",
+    "test:e2e:reuse": "playwright test",
+    "test:frontend": "npm run test --workspaces --if-present -- --run",
     "test:integration": "dotnet test tests/DarkKitchen.IntegrationTests/DarkKitchen.IntegrationTests.csproj",
     "typecheck": "npm run typecheck --workspaces",
     "dev:admin": "npm --workspace @dark-kitchen/admin-panel run dev",

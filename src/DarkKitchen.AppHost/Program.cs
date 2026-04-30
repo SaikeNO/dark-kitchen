@@ -87,18 +87,26 @@ if (includeWebApps)
 {
     var adminPanel = builder.AddViteApp("admin-panel", "../Web/admin-panel")
         .WithExternalHttpEndpoints()
+        .WithReference(catalogApi)
+        .WithEnvironment("VITE_API_BASE_URL", catalogApi.GetEndpoint("https"))
         .WaitFor(catalogApi);
 
     var storefront = builder.AddViteApp("storefront", "../Web/storefront")
         .WithExternalHttpEndpoints()
+        .WithReference(storefrontApi)
+        .WithEnvironment("VITE_API_BASE_URL", storefrontApi.GetEndpoint("https"))
         .WaitFor(storefrontApi);
 
     var kitchenApp = builder.AddViteApp("kitchen-app", "../Web/kitchen-app")
         .WithExternalHttpEndpoints()
+        .WithReference(kdsApi)
+        .WithEnvironment("VITE_API_BASE_URL", kdsApi.GetEndpoint("https"))
         .WaitFor(kdsApi);
 
     var packingTerminal = builder.AddViteApp("packing-terminal", "../Web/packing-terminal")
         .WithExternalHttpEndpoints()
+        .WithReference(packingApi)
+        .WithEnvironment("VITE_API_BASE_URL", packingApi.GetEndpoint("https"))
         .WaitFor(packingApi);
 
     if (useFixedWebPorts)
