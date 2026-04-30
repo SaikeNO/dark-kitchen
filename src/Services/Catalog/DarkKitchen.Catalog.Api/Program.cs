@@ -1,8 +1,10 @@
+using DarkKitchen.Contracts.Events;
 using DarkKitchen.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.AddIntegrationEventBus("catalog-db", DarkKitchenService.Catalog);
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();

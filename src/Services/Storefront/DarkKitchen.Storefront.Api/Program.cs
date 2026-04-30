@@ -1,8 +1,10 @@
+using DarkKitchen.Contracts.Events;
 using DarkKitchen.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.AddIntegrationEventBus("storefront-db", DarkKitchenService.Storefront);
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -29,4 +31,3 @@ app.MapGet("/api/info", () => Results.Ok(new
 }));
 
 app.Run();
-
