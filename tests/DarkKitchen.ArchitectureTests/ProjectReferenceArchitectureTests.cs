@@ -8,6 +8,8 @@ public sealed class ProjectReferenceArchitectureTests
     public void ServiceApiProjects_ReferenceServiceDefaultsOnlyFromSharedInfrastructure()
     {
         var root = RepositoryPaths.FindRoot();
+        var serviceDefaultsProjectPath = NormalizePath(Path.Combine(root, "src", "DarkKitchen.ServiceDefaults", "DarkKitchen.ServiceDefaults.csproj"));
+        var servicesRootPath = NormalizePath(Path.Combine(root, "src", "Services")) + "/";
         var serviceProjects = Directory
             .EnumerateFiles(Path.Combine(root, "src", "Services"), "*.csproj", SearchOption.AllDirectories)
             .Order(StringComparer.Ordinal)
@@ -19,13 +21,11 @@ public sealed class ProjectReferenceArchitectureTests
         {
             var references = ReadProjectReferences(projectPath);
 
-            Assert.Contains(
-                references,
-                reference => reference.EndsWith(Path.Combine("DarkKitchen.ServiceDefaults", "DarkKitchen.ServiceDefaults.csproj"), StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(serviceDefaultsProjectPath, references);
 
             Assert.DoesNotContain(
                 references,
-                reference => reference.Contains(Path.Combine("src", "Services"), StringComparison.OrdinalIgnoreCase));
+                reference => reference.StartsWith(servicesRootPath, StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -55,8 +55,12 @@ public sealed class ProjectReferenceArchitectureTests
             .Descendants("ProjectReference")
             .Select(element => element.Attribute("Include")?.Value)
             .Where(include => !string.IsNullOrWhiteSpace(include))
-            .Select(include => Path.GetFullPath(Path.Combine(projectDirectory, include!.Replace("\\", "/"))))
-            .Select(path => path.Replace("\\", "/"))
+            .Select(include => NormalizePath(Path.GetFullPath(Path.Combine(projectDirectory, include!.Replace("\\", "/")))))
             .ToArray();
+    }
+
+    private static string NormalizePath(string path)
+    {
+        return Path.GetFullPath(path).Replace("\\", "/");
     }
 }
