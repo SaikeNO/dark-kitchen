@@ -15,11 +15,14 @@
     "@dark-kitchen/api-client": "0.1.0",
     "@dark-kitchen/config": "0.1.0",
     "@dark-kitchen/ui": "0.1.0",
+    "@tanstack/react-query": "^5.100.7",
     "@vitejs/plugin-react": "^6.0.1",
-    "vite": "^8.0.10",
-    "typescript": "^6.0.3",
+    "axios": "^1.15.2",
+    "lucide-react": "^1.14.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
@@ -27,4 +30,3 @@
     "vitest": "^4.1.5"
   }
 }
-

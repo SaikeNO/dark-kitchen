@@ -1,82 +1,62 @@
-import { createApiClient } from "@dark-kitchen/api-client";
-import { clientConfig } from "@dark-kitchen/config";
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  BookOpen,
+  Boxes,
+  ChefHat,
+  CircleAlert,
+  CircleCheck,
+  ClipboardList,
+  Database,
+  KeyRound,
+  LogOut,
+  Package,
+  Pencil,
+  Plus,
+  Power,
+  RefreshCw,
+  Route,
+  Save,
+  ShieldCheck,
+  Utensils,
+  UserRound,
+  X,
+  type LucideIcon
+} from "lucide-react";
+import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import {
+  activateProduct as activateProductRequest,
+  apiConfigured,
+  deactivateBrand,
+  deactivateCategory,
+  deactivateIngredient,
+  deactivateProduct,
+  deactivateStation,
+  getCatalogSnapshot,
+  getCurrentSession,
+  getRecipe,
+  loginAdmin,
+  logoutAdmin,
+  saveBrand as saveBrandRequest,
+  saveCategory as saveCategoryRequest,
+  saveIngredient as saveIngredientRequest,
+  saveProduct as saveProductRequest,
+  saveProductStationRoute,
+  saveRecipe as saveRecipeRequest,
+  saveStation as saveStationRequest,
+  type Brand,
+  type CatalogSnapshot,
+  type Category,
+  type Ingredient,
+  type Product,
+  type Session,
+  type Station
+} from "./adminApi";
 import { appMetadata } from "./appMetadata";
 import "./styles.css";
 
-const apiClient = createApiClient(clientConfig.apiBaseUrl);
 const demoPassword = "Demo123!";
 
-type AuthStatus = "checking" | "signed-out" | "signed-in";
 type TabId = "brands" | "menu" | "recipes" | "stations";
-
-interface Session {
-  readonly email: string;
-  readonly roles: string[];
-}
-
-interface Brand {
-  readonly id: string;
-  readonly name: string;
-  readonly description: string | null;
-  readonly logoUrl: string | null;
-  readonly isActive: boolean;
-}
-
-interface Category {
-  readonly id: string;
-  readonly brandId: string;
-  readonly name: string;
-  readonly sortOrder: number;
-  readonly isActive: boolean;
-}
-
-interface Product {
-  readonly id: string;
-  readonly brandId: string;
-  readonly categoryId: string;
-  readonly name: string;
-  readonly description: string | null;
-  readonly price: number;
-  readonly currency: string;
-  readonly isActive: boolean;
-  readonly stationId: string | null;
-  readonly stationCode: string | null;
-  readonly recipeItemCount: number;
-}
-
-interface Ingredient {
-  readonly id: string;
-  readonly name: string;
-  readonly unit: string;
-  readonly isActive: boolean;
-}
-
-interface Station {
-  readonly id: string;
-  readonly code: string;
-  readonly name: string;
-  readonly displayColor: string;
-  readonly isActive: boolean;
-}
-
-interface Recipe {
-  readonly productId: string;
-  readonly items: RecipeItem[];
-}
-
-interface RecipeItem {
-  readonly ingredientId: string;
-  readonly ingredientName: string;
-  readonly unit: string;
-  readonly quantity: number;
-}
-
-interface ApiProblem {
-  readonly title?: string;
-  readonly detail?: string;
-  readonly errors?: Record<string, string[]>;
-}
 
 interface BrandForm {
   readonly name: string;
@@ -119,6 +99,16 @@ interface RecipeDraftRow {
   readonly quantity: string;
 }
 
+interface RecipeDraft {
+  readonly productId: string;
+  readonly rows: RecipeDraftRow[];
+}
+
+interface CatalogMutationRequest {
+  readonly action: () => Promise<unknown>;
+  readonly recipeProductId?: string;
+}
+
 const emptyBrandForm: BrandForm = {
   name: "",
   description: "",
@@ -151,90 +141,43 @@ const emptyIngredientForm: IngredientForm = {
 const emptyStationForm: StationForm = {
   code: "",
   name: "",
-  displayColor: "#2f7d57",
+  displayColor: "#22c55e",
   isActive: true
 };
 
+const emptyCatalogSnapshot: CatalogSnapshot = {
+  brands: [],
+  categories: [],
+  products: [],
+  ingredients: [],
+  stations: []
+};
+
+const queryKeys = {
+  session: ["admin-session"] as const,
+  catalog: ["admin-catalog"] as const,
+  recipes: ["admin-recipes"] as const,
+  recipe: (productId: string) => ["admin-recipes", productId] as const
+};
+
 const tabs = [
-  { id: "brands", label: "Brands" },
-  { id: "menu", label: "Menu" },
-  { id: "recipes", label: "Recipes" },
-  { id: "stations", label: "Stations" }
-] as const satisfies readonly { readonly id: TabId; readonly label: string }[];
-
-function problemMessage(problem: ApiProblem | undefined, fallback: string) {
-  if (problem?.errors !== undefined) {
-    return Object.entries(problem.errors)
-      .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
-      .join(" ");
-  }
-
-  return problem?.detail ?? problem?.title ?? fallback;
-}
-
-async function requestApi<TResponse>(
-  path: string,
-  init: RequestInit & { readonly body?: BodyInit | null } = {}
-) {
-  const headers = new Headers(init.headers);
-  const hasBody = init.body !== undefined && init.body !== null;
-  if (hasBody && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const response = await fetch(apiClient.buildUrl(path), {
-    ...init,
-    headers,
-    credentials: "include"
-  });
-
-  if (!response.ok) {
-    const problem = (await response.json().catch(() => undefined)) as ApiProblem | undefined;
-    throw new Error(problemMessage(problem, `Request failed with ${response.status}.`));
-  }
-
-  if (response.status === 204) {
-    return undefined as TResponse;
-  }
-
-  return (await response.json()) as TResponse;
-}
-
-async function loadCatalogSnapshot() {
-  const [brands, categories, products, ingredients, stations] = await Promise.all([
-    requestApi<Brand[]>("/api/admin/brands"),
-    requestApi<Category[]>("/api/admin/categories"),
-    requestApi<Product[]>("/api/admin/products"),
-    requestApi<Ingredient[]>("/api/admin/ingredients"),
-    requestApi<Station[]>("/api/admin/stations")
-  ]);
-
-  return { brands, categories, products, ingredients, stations };
-}
-
-function textOrDash(value: string | null | undefined) {
-  return value === null || value === undefined || value.length === 0 ? "-" : value;
-}
-
-function statusLabel(isActive: boolean) {
-  return isActive ? "Active" : "Inactive";
-}
+  { id: "brands", label: "Brands", icon: Database },
+  { id: "menu", label: "Menu", icon: Utensils },
+  { id: "recipes", label: "Recipes", icon: BookOpen },
+  { id: "stations", label: "Stations", icon: ChefHat }
+] as const satisfies readonly {
+  readonly id: TabId;
+  readonly label: string;
+  readonly icon: LucideIcon;
+}[];
 
 export function App() {
-  const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
-  const [session, setSession] = useState<Session | null>(null);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabId>("brands");
   const [email, setEmail] = useState("manager@darkkitchen.local");
   const [password, setPassword] = useState(demoPassword);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [stations, setStations] = useState<Station[]>([]);
 
   const [brandForm, setBrandForm] = useState<BrandForm>(emptyBrandForm);
   const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
@@ -247,125 +190,96 @@ export function App() {
   const [stationForm, setStationForm] = useState<StationForm>(emptyStationForm);
   const [editingStationId, setEditingStationId] = useState<string | null>(null);
   const [selectedRecipeProductId, setSelectedRecipeProductId] = useState("");
-  const [recipeRows, setRecipeRows] = useState<RecipeDraftRow[]>([]);
+  const [recipeDraft, setRecipeDraft] = useState<RecipeDraft | null>(null);
   const [routeDrafts, setRouteDrafts] = useState<Record<string, string>>({});
 
-  const isManager = session?.roles.includes("Manager") ?? false;
-  const canWrite = authStatus === "signed-in" && isManager;
+  const sessionQuery = useQuery({
+    queryKey: queryKeys.session,
+    queryFn: ({ signal }) => getCurrentSession(signal),
+    retry: false,
+    staleTime: 60_000
+  });
 
-  const brandById = useMemo(() => new Map(brands.map(brand => [brand.id, brand])), [brands]);
-  const categoryById = useMemo(() => new Map(categories.map(category => [category.id, category])), [categories]);
+  const session = sessionQuery.data ?? null;
+  const isSignedIn = session !== null;
+  const isManager = session?.roles?.includes("Manager") ?? false;
+  const canWrite = isSignedIn && isManager;
 
-  const activeBrands = brands.filter(brand => brand.isActive);
-  const activeCategories = categories.filter(category => category.isActive);
-  const activeStations = stations.filter(station => station.isActive);
-  const activeIngredients = ingredients.filter(ingredient => ingredient.isActive);
+  const catalogQuery = useQuery({
+    queryKey: queryKeys.catalog,
+    queryFn: ({ signal }) => getCatalogSnapshot(signal),
+    enabled: isSignedIn,
+    staleTime: 30_000
+  });
+
+  const catalog = catalogQuery.data ?? emptyCatalogSnapshot;
+  const { brands, categories, products, ingredients, stations } = catalog;
   const effectiveRecipeProductId = selectedRecipeProductId.length > 0
     ? selectedRecipeProductId
     : products[0]?.id ?? "";
+
+  const recipeQuery = useQuery({
+    queryKey: queryKeys.recipe(effectiveRecipeProductId),
+    queryFn: ({ signal }) => getRecipe(effectiveRecipeProductId, signal),
+    enabled: isSignedIn && effectiveRecipeProductId.length > 0,
+    staleTime: 30_000
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: (request: { readonly email: string; readonly password: string }) => (
+      loginAdmin(request.email, request.password)
+    ),
+    onSuccess: current => {
+      queryClient.setQueryData<Session | null>(queryKeys.session, current);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.catalog });
+    }
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: logoutAdmin,
+    onSettled: () => {
+      queryClient.setQueryData<Session | null>(queryKeys.session, null);
+      queryClient.removeQueries({ queryKey: queryKeys.catalog });
+      queryClient.removeQueries({ queryKey: queryKeys.recipes });
+    }
+  });
+
+  const catalogMutation = useMutation({
+    mutationFn: (request: CatalogMutationRequest) => request.action(),
+    onSuccess: async (_data, request) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.catalog });
+      if (request.recipeProductId !== undefined) {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.recipe(request.recipeProductId) });
+      }
+    }
+  });
+
+  const busy = loginMutation.isPending || logoutMutation.isPending || catalogMutation.isPending;
+
+  const brandById = useMemo(() => new Map(brands.map(brand => [brand.id, brand])), [brands]);
+  const categoryById = useMemo(() => new Map(categories.map(category => [category.id, category])), [categories]);
+  const activeBrands = useMemo(() => brands.filter(brand => brand.isActive), [brands]);
+  const activeCategories = useMemo(() => categories.filter(category => category.isActive), [categories]);
+  const activeProducts = useMemo(() => products.filter(product => product.isActive), [products]);
+  const activeStations = useMemo(() => stations.filter(station => station.isActive), [stations]);
+  const activeIngredients = useMemo(() => ingredients.filter(ingredient => ingredient.isActive), [ingredients]);
+  const loadedRecipeRows = useMemo(() => recipeQuery.data?.items.map(item => ({
+    ingredientId: item.ingredientId,
+    quantity: String(item.quantity)
+  })) ?? [], [recipeQuery.data]);
+  const recipeRows = recipeDraft?.productId === effectiveRecipeProductId
+    ? recipeDraft.rows
+    : loadedRecipeRows;
   const productCategories = productForm.brandId.length > 0
     ? activeCategories.filter(category => category.brandId === productForm.brandId)
     : activeCategories;
 
-  const refreshCatalog = useCallback(async () => {
-    const snapshot = await loadCatalogSnapshot();
-
-    setBrands(snapshot.brands);
-    setCategories(snapshot.categories);
-    setProducts(snapshot.products);
-    setIngredients(snapshot.ingredients);
-    setStations(snapshot.stations);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function bootstrap() {
-      try {
-        const current = await requestApi<Session>("/api/admin/auth/me");
-        if (!mounted) {
-          return;
-        }
-
-        setSession(current);
-        setAuthStatus("signed-in");
-      } catch {
-        if (mounted) {
-          setSession(null);
-          setAuthStatus("signed-out");
-        }
-      }
-    }
-
-    void bootstrap();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (authStatus !== "signed-in") {
-      return;
-    }
-
-    let mounted = true;
-
-    async function loadInitialCatalog() {
-      try {
-        const snapshot = await loadCatalogSnapshot();
-        if (!mounted) {
-          return;
-        }
-
-        setBrands(snapshot.brands);
-        setCategories(snapshot.categories);
-        setProducts(snapshot.products);
-        setIngredients(snapshot.ingredients);
-        setStations(snapshot.stations);
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Catalog load failed.");
-        }
-      }
-    }
-
-    void loadInitialCatalog();
-
-    return () => {
-      mounted = false;
-    };
-  }, [authStatus]);
-
-  useEffect(() => {
-    if (authStatus !== "signed-in" || effectiveRecipeProductId.length === 0) {
-      return;
-    }
-
-    let mounted = true;
-
-    async function loadRecipe() {
-      try {
-        const recipe = await requestApi<Recipe>(`/api/admin/products/${effectiveRecipeProductId}/recipe`);
-        if (mounted) {
-          setRecipeRows(recipe.items.map(item => ({
-            ingredientId: item.ingredientId,
-            quantity: String(item.quantity)
-          })));
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Recipe load failed.");
-        }
-      }
-    }
-
-    void loadRecipe();
-
-    return () => {
-      mounted = false;
-    };
-  }, [authStatus, effectiveRecipeProductId]);
+  const metrics = [
+    { label: "Brands", value: brands.length, detail: `${activeBrands.length} active`, icon: Database },
+    { label: "Products", value: products.length, detail: `${activeProducts.length} live`, icon: Package },
+    { label: "Ingredients", value: ingredients.length, detail: `${activeIngredients.length} usable`, icon: Boxes },
+    { label: "Stations", value: stations.length, detail: `${activeStations.length} online`, icon: ChefHat }
+  ] as const;
 
   function clearMessages() {
     setError(null);
@@ -381,52 +295,39 @@ export function App() {
     return true;
   }
 
-  async function runMutation(action: () => Promise<void>, success: string) {
+  async function runCatalogMutation(request: CatalogMutationRequest, success: string) {
     if (!requireManager()) {
       return;
     }
 
     clearMessages();
-    setBusy(true);
     try {
-      await action();
-      await refreshCatalog();
+      await catalogMutation.mutateAsync(request);
       setNotice(success);
     } catch (mutationError) {
-      setError(mutationError instanceof Error ? mutationError.message : "Request failed.");
-    } finally {
-      setBusy(false);
+      setError(errorMessage(mutationError, "Request failed."));
     }
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearMessages();
-    setBusy(true);
-
     try {
-      const current = await requestApi<Session>("/api/admin/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password })
-      });
-      setSession(current);
-      setAuthStatus("signed-in");
+      await loginMutation.mutateAsync({ email, password });
+      setNotice("Signed in.");
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : "Login failed.");
-    } finally {
-      setBusy(false);
+      setError(errorMessage(loginError, "Login failed."));
     }
   }
 
   async function handleLogout() {
     clearMessages();
-    setBusy(true);
     try {
-      await requestApi<void>("/api/admin/auth/logout", { method: "POST" });
+      await logoutMutation.mutateAsync();
+    } catch {
+      queryClient.setQueryData<Session | null>(queryKeys.session, null);
     } finally {
-      setSession(null);
-      setAuthStatus("signed-out");
-      setBusy(false);
+      setActiveTab("brands");
     }
   }
 
@@ -447,22 +348,17 @@ export function App() {
 
   async function saveBrand(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await runMutation(async () => {
-      const payload = {
-        name: brandForm.name,
-        description: brandForm.description,
-        logoUrl: brandForm.logoUrl,
-        isActive: brandForm.isActive
-      };
-
-      if (editingBrandId === null) {
-        await requestApi<Brand>("/api/admin/brands", { method: "POST", body: JSON.stringify(payload) });
-      } else {
-        await requestApi<Brand>(`/api/admin/brands/${editingBrandId}`, { method: "PUT", body: JSON.stringify(payload) });
+    await runCatalogMutation({
+      action: async () => {
+        await saveBrandRequest(editingBrandId, {
+          name: brandForm.name,
+          description: brandForm.description,
+          logoUrl: brandForm.logoUrl,
+          isActive: brandForm.isActive
+        });
+        setEditingBrandId(null);
+        setBrandForm(emptyBrandForm);
       }
-
-      setEditingBrandId(null);
-      setBrandForm(emptyBrandForm);
     }, "Brand saved.");
   }
 
@@ -478,25 +374,17 @@ export function App() {
 
   async function saveCategory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await runMutation(async () => {
-      const payload = {
-        brandId: categoryForm.brandId,
-        name: categoryForm.name,
-        sortOrder: Number(categoryForm.sortOrder),
-        isActive: categoryForm.isActive
-      };
-
-      if (editingCategoryId === null) {
-        await requestApi<Category>("/api/admin/categories", { method: "POST", body: JSON.stringify(payload) });
-      } else {
-        await requestApi<Category>(`/api/admin/categories/${editingCategoryId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload)
+    await runCatalogMutation({
+      action: async () => {
+        await saveCategoryRequest(editingCategoryId, {
+          brandId: categoryForm.brandId,
+          name: categoryForm.name,
+          sortOrder: Number(categoryForm.sortOrder),
+          isActive: categoryForm.isActive
         });
+        setEditingCategoryId(null);
+        setCategoryForm(emptyCategoryForm);
       }
-
-      setEditingCategoryId(null);
-      setCategoryForm(emptyCategoryForm);
     }, "Category saved.");
   }
 
@@ -514,27 +402,19 @@ export function App() {
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await runMutation(async () => {
-      const payload = {
-        brandId: productForm.brandId,
-        categoryId: productForm.categoryId,
-        name: productForm.name,
-        description: productForm.description,
-        price: Number(productForm.price),
-        currency: productForm.currency
-      };
-
-      if (editingProductId === null) {
-        await requestApi<Product>("/api/admin/products", { method: "POST", body: JSON.stringify(payload) });
-      } else {
-        await requestApi<Product>(`/api/admin/products/${editingProductId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload)
+    await runCatalogMutation({
+      action: async () => {
+        await saveProductRequest(editingProductId, {
+          brandId: productForm.brandId,
+          categoryId: productForm.categoryId,
+          name: productForm.name,
+          description: productForm.description,
+          price: Number(productForm.price),
+          currency: productForm.currency
         });
+        setEditingProductId(null);
+        setProductForm(emptyProductForm);
       }
-
-      setEditingProductId(null);
-      setProductForm(emptyProductForm);
     }, "Product saved.");
   }
 
@@ -549,24 +429,16 @@ export function App() {
 
   async function saveIngredient(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await runMutation(async () => {
-      const payload = {
-        name: ingredientForm.name,
-        unit: ingredientForm.unit,
-        isActive: ingredientForm.isActive
-      };
-
-      if (editingIngredientId === null) {
-        await requestApi<Ingredient>("/api/admin/ingredients", { method: "POST", body: JSON.stringify(payload) });
-      } else {
-        await requestApi<Ingredient>(`/api/admin/ingredients/${editingIngredientId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload)
+    await runCatalogMutation({
+      action: async () => {
+        await saveIngredientRequest(editingIngredientId, {
+          name: ingredientForm.name,
+          unit: ingredientForm.unit,
+          isActive: ingredientForm.isActive
         });
+        setEditingIngredientId(null);
+        setIngredientForm(emptyIngredientForm);
       }
-
-      setEditingIngredientId(null);
-      setIngredientForm(emptyIngredientForm);
     }, "Ingredient saved.");
   }
 
@@ -582,92 +454,80 @@ export function App() {
 
   async function saveStation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await runMutation(async () => {
-      const payload = {
-        code: stationForm.code,
-        name: stationForm.name,
-        displayColor: stationForm.displayColor,
-        isActive: stationForm.isActive
-      };
-
-      if (editingStationId === null) {
-        await requestApi<Station>("/api/admin/stations", { method: "POST", body: JSON.stringify(payload) });
-      } else {
-        await requestApi<Station>(`/api/admin/stations/${editingStationId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload)
+    await runCatalogMutation({
+      action: async () => {
+        await saveStationRequest(editingStationId, {
+          code: stationForm.code,
+          name: stationForm.name,
+          displayColor: stationForm.displayColor,
+          isActive: stationForm.isActive
         });
+        setEditingStationId(null);
+        setStationForm(emptyStationForm);
       }
-
-      setEditingStationId(null);
-      setStationForm(emptyStationForm);
     }, "Station saved.");
   }
 
-  async function deactivate(path: string, success: string) {
-    await runMutation(async () => {
-      await requestApi<unknown>(path, { method: "POST" });
-    }, success);
-  }
-
-  async function activateProduct(productId: string) {
-    await runMutation(async () => {
-      await requestApi<Product>(`/api/admin/products/${productId}/activate`, { method: "POST" });
-    }, "Product activated.");
-  }
-
   async function saveRoute(productId: string) {
-    await runMutation(async () => {
-      const stationId = routeDrafts[productId] ?? "";
-      await requestApi<unknown>(`/api/admin/products/${productId}/station-route`, {
-        method: "PUT",
-        body: JSON.stringify({ stationId })
-      });
+    await runCatalogMutation({
+      action: () => saveProductStationRoute(productId, routeDrafts[productId] ?? "")
     }, "Route saved.");
   }
 
   async function saveRecipe(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await runMutation(async () => {
-      await requestApi<Recipe>(`/api/admin/products/${effectiveRecipeProductId}/recipe`, {
-        method: "PUT",
-        body: JSON.stringify({
-          items: recipeRows.map(row => ({
-            ingredientId: row.ingredientId,
-            quantity: Number(row.quantity)
-          }))
-        })
-      });
+    if (effectiveRecipeProductId.length === 0) {
+      setError("Select product first.");
+      return;
+    }
+
+    await runCatalogMutation({
+      action: () => saveRecipeRequest(effectiveRecipeProductId, {
+        items: recipeRows.map(row => ({
+          ingredientId: row.ingredientId,
+          quantity: Number(row.quantity)
+        }))
+      }),
+      recipeProductId: effectiveRecipeProductId
     }, "Recipe saved.");
   }
 
   function addRecipeRow() {
-    setRecipeRows(current => [
+    updateRecipeRows(current => [
       ...current,
       { ingredientId: activeIngredients[0]?.id ?? "", quantity: "1" }
     ]);
   }
 
-  if (authStatus === "checking") {
-    return (
-      <main className="admin-shell">
-        <header className="topbar">
-          <div>
-            <p className="brand-mark">Dark Kitchen</p>
-            <h1>{appMetadata.name}</h1>
-          </div>
-          <span className="pill">Loading</span>
-        </header>
-      </main>
-    );
+  function updateRecipeRows(updater: (current: RecipeDraftRow[]) => RecipeDraftRow[]) {
+    setRecipeDraft({
+      productId: effectiveRecipeProductId,
+      rows: updater(recipeRows)
+    });
   }
 
-  if (authStatus === "signed-out") {
+  if (sessionQuery.isPending) {
+    return <LoadingScreen />;
+  }
+
+  if (!isSignedIn) {
     return (
       <main className="login-screen">
-        <section className="login-panel" aria-labelledby="login-title">
+        <section className="login-visual" aria-label="Dark Kitchen operations">
           <p className="brand-mark">Dark Kitchen</p>
-          <h1 id="login-title">{appMetadata.name}</h1>
+          <h1>{appMetadata.name}</h1>
+          <p>{appMetadata.description}</p>
+          <div className="login-stats" aria-label="Admin scope">
+            <MetricCard icon={Database} label="Catalog" value="4" detail="core modules" />
+            <MetricCard icon={ShieldCheck} label="Access" value="2" detail="roles" />
+          </div>
+        </section>
+        <section className="login-panel" aria-labelledby="login-title">
+          <div className="panel-kicker">
+            <KeyRound aria-hidden="true" />
+            <span>Secure workspace</span>
+          </div>
+          <h2 id="login-title">Sign in</h2>
           <form className="login-form" onSubmit={event => void handleLogin(event)}>
             <label>
               Email
@@ -689,16 +549,16 @@ export function App() {
             </label>
             <div className="demo-row" aria-label="Demo accounts">
               <button type="button" onClick={() => pickDemoAccount("manager@darkkitchen.local")}>
+                <UserRound aria-hidden="true" />
                 Manager demo
               </button>
               <button type="button" onClick={() => pickDemoAccount("operator@darkkitchen.local")}>
+                <ShieldCheck aria-hidden="true" />
                 Operator demo
               </button>
             </div>
-            {error !== null && <p className="message is-error">{error}</p>}
-            <button className="primary-button" type="submit" disabled={busy}>
-              Sign in
-            </button>
+            {error !== null && <Message tone="error">{error}</Message>}
+            <ActionButton icon={Power} label="Sign in" type="submit" variant="primary" disabled={busy} />
           </form>
         </section>
       </main>
@@ -706,59 +566,109 @@ export function App() {
   }
 
   return (
-    <main className="admin-shell">
-      <header className="topbar">
-        <div>
+    <main className="admin-layout">
+      <aside className="sidebar">
+        <div className="brand-block">
           <p className="brand-mark">Dark Kitchen</p>
           <h1>{appMetadata.name}</h1>
+          <p>{appMetadata.context}</p>
         </div>
-        <div className="session-box">
-          <span>{session?.email}</span>
-          <span className={isManager ? "pill is-manager" : "pill"}>{isManager ? "Manager" : "Operator"}</span>
-          <button type="button" onClick={() => void handleLogout()} disabled={busy}>
-            Logout
-          </button>
+
+        <nav className="side-nav" aria-label="Admin sections">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={tab.id === activeTab ? "is-selected" : ""}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <Icon aria-hidden="true" />
+                <span>{tab.label}</span>
+                <span className="nav-count">{tabCount(tab.id, catalog)}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar-card">
+          <span className={apiConfigured ? "system-dot is-ok" : "system-dot"} />
+          <div>
+            <strong>API</strong>
+            <p>{apiConfigured ? "Configured" : "Relative URL"}</p>
+          </div>
         </div>
-      </header>
+      </aside>
 
-      <nav className="tabs" aria-label="Admin sections">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            type="button"
-            className={tab.id === activeTab ? "is-selected" : ""}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+      <section className="admin-main">
+        <header className="command-bar">
+          <div>
+            <p className="section-kicker">Catalog command center</p>
+            <h2>Menu, recipes and stations</h2>
+          </div>
+          <div className="session-box">
+            <span>{session.email}</span>
+            <span className={isManager ? "pill is-manager" : "pill"}>
+              {isManager ? "Manager" : "Operator"}
+            </span>
+            <ActionButton icon={LogOut} label="Logout" onClick={() => void handleLogout()} disabled={busy} />
+          </div>
+        </header>
 
-      {(error !== null || notice !== null || !canWrite) && (
-        <div className="message-row">
-          {!canWrite && <p className="message">Operator read-only mode</p>}
-          {notice !== null && <p className="message is-success">{notice}</p>}
-          {error !== null && <p className="message is-error">{error}</p>}
-        </div>
-      )}
+        <section className="metric-grid" aria-label="Catalog summary">
+          {metrics.map(metric => (
+            <MetricCard
+              key={metric.label}
+              icon={metric.icon}
+              label={metric.label}
+              value={String(metric.value)}
+              detail={metric.detail}
+            />
+          ))}
+        </section>
 
-      {activeTab === "brands" && renderBrands()}
-      {activeTab === "menu" && renderMenu()}
-      {activeTab === "recipes" && renderRecipes()}
-      {activeTab === "stations" && renderStations()}
+        {(error !== null || notice !== null || !canWrite || catalogQuery.isError) && (
+          <div className="message-stack">
+            {!canWrite && <Message>Operator read-only mode</Message>}
+            {notice !== null && <Message tone="success">{notice}</Message>}
+            {error !== null && <Message tone="error">{error}</Message>}
+            {catalogQuery.isError && <Message tone="error">{errorMessage(catalogQuery.error, "Catalog load failed.")}</Message>}
+          </div>
+        )}
+
+        {catalogQuery.isPending ? (
+          <section className="workspace">
+            <div className="empty-state">
+              <RefreshCw aria-hidden="true" />
+              <strong>Loading catalog</strong>
+              <span>Preparing workspace.</span>
+            </div>
+          </section>
+        ) : (
+          <>
+            {activeTab === "brands" && renderBrands()}
+            {activeTab === "menu" && renderMenu()}
+            {activeTab === "recipes" && renderRecipes()}
+            {activeTab === "stations" && renderStations()}
+          </>
+        )}
+      </section>
     </main>
   );
 
   function renderBrands() {
     return (
       <section className="workspace" aria-labelledby="brands-title">
-        <div className="section-heading">
-          <h2 id="brands-title">Brands</h2>
-          <span>{brands.length} records</span>
-        </div>
+        <PanelIntro
+          id="brands-title"
+          title="Brands"
+          detail={`${brands.length} records`}
+          icon={Database}
+        />
         <div className="split-layout">
           <form className="editor-panel" onSubmit={event => void saveBrand(event)}>
-            <h3>{editingBrandId === null ? "New brand" : "Edit brand"}</h3>
+            <PanelTitle>{editingBrandId === null ? "New brand" : "Edit brand"}</PanelTitle>
             <label>
               Name
               <input
@@ -792,21 +702,19 @@ export function App() {
               />
               Active
             </label>
-            <div className="form-actions">
-              <button className="primary-button" type="submit" disabled={!canWrite || busy}>
-                Save
-              </button>
-              <button
-                type="button"
+            <FormActions>
+              <ActionButton icon={Save} label="Save" type="submit" variant="primary" disabled={!canWrite || busy} />
+              <ActionButton
+                icon={X}
+                label="Clear"
                 onClick={() => {
                   setEditingBrandId(null);
                   setBrandForm(emptyBrandForm);
                 }}
-              >
-                Clear
-              </button>
-            </div>
+              />
+            </FormActions>
           </form>
+
           <div className="table-panel">
             <table>
               <thead>
@@ -818,20 +726,21 @@ export function App() {
                 </tr>
               </thead>
               <tbody>
+                {brands.length === 0 && <EmptyRow colSpan={4} label="No brands yet." />}
                 {brands.map(brand => (
                   <tr key={brand.id}>
-                    <td>{brand.name}</td>
-                    <td><span className={brand.isActive ? "status is-active" : "status"}>{statusLabel(brand.isActive)}</span></td>
+                    <td className="strong-cell">{brand.name}</td>
+                    <td><StatusBadge isActive={brand.isActive} /></td>
                     <td>{textOrDash(brand.description)}</td>
                     <td className="row-actions">
-                      <button type="button" onClick={() => editBrand(brand)}>Edit</button>
-                      <button
-                        type="button"
+                      <ActionButton icon={Pencil} label="Edit" onClick={() => editBrand(brand)} />
+                      <ActionButton
+                        icon={Power}
+                        label="Deactivate"
+                        variant="danger"
                         disabled={!canWrite || !brand.isActive || busy}
-                        onClick={() => void deactivate(`/api/admin/brands/${brand.id}/deactivate`, "Brand deactivated.")}
-                      >
-                        Deactivate
-                      </button>
+                        onClick={() => void runCatalogMutation({ action: () => deactivateBrand(brand.id) }, "Brand deactivated.")}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -846,13 +755,10 @@ export function App() {
   function renderMenu() {
     return (
       <section className="workspace" aria-labelledby="menu-title">
-        <div className="section-heading">
-          <h2 id="menu-title">Menu</h2>
-          <span>{products.length} products</span>
-        </div>
+        <PanelIntro id="menu-title" title="Menu" detail={`${products.length} products`} icon={Utensils} />
         <div className="two-column">
           <form className="editor-panel" onSubmit={event => void saveCategory(event)}>
-            <h3>{editingCategoryId === null ? "New category" : "Edit category"}</h3>
+            <PanelTitle>{editingCategoryId === null ? "New category" : "Edit category"}</PanelTitle>
             <label>
               Brand
               <select
@@ -890,22 +796,21 @@ export function App() {
               />
               Active
             </label>
-            <div className="form-actions">
-              <button className="primary-button" type="submit" disabled={!canWrite || busy}>Save</button>
-              <button
-                type="button"
+            <FormActions>
+              <ActionButton icon={Save} label="Save" type="submit" variant="primary" disabled={!canWrite || busy} />
+              <ActionButton
+                icon={X}
+                label="Clear"
                 onClick={() => {
                   setEditingCategoryId(null);
                   setCategoryForm(emptyCategoryForm);
                 }}
-              >
-                Clear
-              </button>
-            </div>
+              />
+            </FormActions>
           </form>
 
           <form className="editor-panel" onSubmit={event => void saveProduct(event)}>
-            <h3>{editingProductId === null ? "New product" : "Edit product"}</h3>
+            <PanelTitle>{editingProductId === null ? "New product" : "Edit product"}</PanelTitle>
             <label>
               Brand
               <select
@@ -965,18 +870,17 @@ export function App() {
                 />
               </label>
             </div>
-            <div className="form-actions">
-              <button className="primary-button" type="submit" disabled={!canWrite || busy}>Save</button>
-              <button
-                type="button"
+            <FormActions>
+              <ActionButton icon={Save} label="Save" type="submit" variant="primary" disabled={!canWrite || busy} />
+              <ActionButton
+                icon={X}
+                label="Clear"
                 onClick={() => {
                   setEditingProductId(null);
                   setProductForm(emptyProductForm);
                 }}
-              >
-                Clear
-              </button>
-            </div>
+              />
+            </FormActions>
           </form>
         </div>
 
@@ -995,13 +899,14 @@ export function App() {
               </tr>
             </thead>
             <tbody>
+              {products.length === 0 && <EmptyRow colSpan={8} label="No products yet." />}
               {products.map(product => (
                 <tr key={product.id}>
-                  <td>{product.name}</td>
+                  <td className="strong-cell">{product.name}</td>
                   <td>{brandById.get(product.brandId)?.name ?? "-"}</td>
                   <td>{categoryById.get(product.categoryId)?.name ?? "-"}</td>
                   <td>{product.price.toFixed(2)} {product.currency}</td>
-                  <td><span className={product.isActive ? "status is-active" : "status"}>{statusLabel(product.isActive)}</span></td>
+                  <td><StatusBadge isActive={product.isActive} /></td>
                   <td>{product.recipeItemCount}</td>
                   <td>
                     <select
@@ -1016,16 +921,21 @@ export function App() {
                     </select>
                   </td>
                   <td className="row-actions">
-                    <button type="button" onClick={() => editProduct(product)}>Edit</button>
-                    <button type="button" disabled={!canWrite || busy} onClick={() => void saveRoute(product.id)}>Route</button>
-                    <button type="button" disabled={!canWrite || product.isActive || busy} onClick={() => void activateProduct(product.id)}>Activate</button>
-                    <button
-                      type="button"
+                    <ActionButton icon={Pencil} label="Edit" onClick={() => editProduct(product)} />
+                    <ActionButton icon={Route} label="Route" disabled={!canWrite || busy} onClick={() => void saveRoute(product.id)} />
+                    <ActionButton
+                      icon={CircleCheck}
+                      label="Activate"
+                      disabled={!canWrite || product.isActive || busy}
+                      onClick={() => void runCatalogMutation({ action: () => activateProductRequest(product.id) }, "Product activated.")}
+                    />
+                    <ActionButton
+                      icon={Power}
+                      label="Deactivate"
+                      variant="danger"
                       disabled={!canWrite || !product.isActive || busy}
-                      onClick={() => void deactivate(`/api/admin/products/${product.id}/deactivate`, "Product deactivated.")}
-                    >
-                      Deactivate
-                    </button>
+                      onClick={() => void runCatalogMutation({ action: () => deactivateProduct(product.id) }, "Product deactivated.")}
+                    />
                   </td>
                 </tr>
               ))}
@@ -1045,21 +955,22 @@ export function App() {
               </tr>
             </thead>
             <tbody>
+              {categories.length === 0 && <EmptyRow colSpan={5} label="No categories yet." />}
               {categories.map(category => (
                 <tr key={category.id}>
-                  <td>{category.name}</td>
+                  <td className="strong-cell">{category.name}</td>
                   <td>{brandById.get(category.brandId)?.name ?? "-"}</td>
                   <td>{category.sortOrder}</td>
-                  <td><span className={category.isActive ? "status is-active" : "status"}>{statusLabel(category.isActive)}</span></td>
+                  <td><StatusBadge isActive={category.isActive} /></td>
                   <td className="row-actions">
-                    <button type="button" onClick={() => editCategory(category)}>Edit</button>
-                    <button
-                      type="button"
+                    <ActionButton icon={Pencil} label="Edit" onClick={() => editCategory(category)} />
+                    <ActionButton
+                      icon={Power}
+                      label="Deactivate"
+                      variant="danger"
                       disabled={!canWrite || !category.isActive || busy}
-                      onClick={() => void deactivate(`/api/admin/categories/${category.id}/deactivate`, "Category deactivated.")}
-                    >
-                      Deactivate
-                    </button>
+                      onClick={() => void runCatalogMutation({ action: () => deactivateCategory(category.id) }, "Category deactivated.")}
+                    />
                   </td>
                 </tr>
               ))}
@@ -1075,13 +986,10 @@ export function App() {
 
     return (
       <section className="workspace" aria-labelledby="recipes-title">
-        <div className="section-heading">
-          <h2 id="recipes-title">Recipes</h2>
-          <span>{ingredients.length} ingredients</span>
-        </div>
+        <PanelIntro id="recipes-title" title="Recipes" detail={`${ingredients.length} ingredients`} icon={BookOpen} />
         <div className="two-column">
           <form className="editor-panel" onSubmit={event => void saveIngredient(event)}>
-            <h3>{editingIngredientId === null ? "New ingredient" : "Edit ingredient"}</h3>
+            <PanelTitle>{editingIngredientId === null ? "New ingredient" : "Edit ingredient"}</PanelTitle>
             <label>
               Name
               <input
@@ -1107,22 +1015,21 @@ export function App() {
               />
               Active
             </label>
-            <div className="form-actions">
-              <button className="primary-button" type="submit" disabled={!canWrite || busy}>Save</button>
-              <button
-                type="button"
+            <FormActions>
+              <ActionButton icon={Save} label="Save" type="submit" variant="primary" disabled={!canWrite || busy} />
+              <ActionButton
+                icon={X}
+                label="Clear"
                 onClick={() => {
                   setEditingIngredientId(null);
                   setIngredientForm(emptyIngredientForm);
                 }}
-              >
-                Clear
-              </button>
-            </div>
+              />
+            </FormActions>
           </form>
 
           <form className="editor-panel recipe-editor" onSubmit={event => void saveRecipe(event)}>
-            <h3>{selectedProduct?.name ?? "Recipe"}</h3>
+            <PanelTitle>{selectedProduct?.name ?? "Recipe"}</PanelTitle>
             <label>
               Product
               <select
@@ -1134,13 +1041,14 @@ export function App() {
               </select>
             </label>
             <div className="recipe-rows">
+              {recipeQuery.isFetching && <span className="muted-line">Refreshing recipe...</span>}
               {recipeRows.map((row, index) => (
                 <div className="recipe-row" key={`${row.ingredientId}-${index.toString()}`}>
                   <select
                     value={row.ingredientId}
                     disabled={!canWrite}
                     aria-label={`Ingredient ${index + 1}`}
-                    onChange={event => setRecipeRows(current => current.map((item, itemIndex) => (
+                    onChange={event => updateRecipeRows(current => current.map((item, itemIndex) => (
                       itemIndex === index ? { ...item, ingredientId: event.currentTarget.value } : item
                     )))}
                   >
@@ -1156,28 +1064,29 @@ export function App() {
                     step="0.001"
                     value={row.quantity}
                     disabled={!canWrite}
-                    onChange={event => setRecipeRows(current => current.map((item, itemIndex) => (
+                    onChange={event => updateRecipeRows(current => current.map((item, itemIndex) => (
                       itemIndex === index ? { ...item, quantity: event.currentTarget.value } : item
                     )))}
                   />
-                  <button
-                    type="button"
+                  <ActionButton
+                    icon={X}
+                    label="Remove"
                     disabled={!canWrite}
-                    onClick={() => setRecipeRows(current => current.filter((_row, itemIndex) => itemIndex !== index))}
-                  >
-                    Remove
-                  </button>
+                    onClick={() => updateRecipeRows(current => current.filter((_row, itemIndex) => itemIndex !== index))}
+                  />
                 </div>
               ))}
             </div>
-            <div className="form-actions">
-              <button type="button" disabled={!canWrite || activeIngredients.length === 0} onClick={addRecipeRow}>
-                Add item
-              </button>
-              <button className="primary-button" type="submit" disabled={!canWrite || busy || effectiveRecipeProductId.length === 0}>
-                Save recipe
-              </button>
-            </div>
+            <FormActions>
+              <ActionButton icon={Plus} label="Add item" disabled={!canWrite || activeIngredients.length === 0} onClick={addRecipeRow} />
+              <ActionButton
+                icon={Save}
+                label="Save recipe"
+                type="submit"
+                variant="primary"
+                disabled={!canWrite || busy || effectiveRecipeProductId.length === 0}
+              />
+            </FormActions>
           </form>
         </div>
 
@@ -1192,20 +1101,21 @@ export function App() {
               </tr>
             </thead>
             <tbody>
+              {ingredients.length === 0 && <EmptyRow colSpan={4} label="No ingredients yet." />}
               {ingredients.map(ingredient => (
                 <tr key={ingredient.id}>
-                  <td>{ingredient.name}</td>
+                  <td className="strong-cell">{ingredient.name}</td>
                   <td>{ingredient.unit}</td>
-                  <td><span className={ingredient.isActive ? "status is-active" : "status"}>{statusLabel(ingredient.isActive)}</span></td>
+                  <td><StatusBadge isActive={ingredient.isActive} /></td>
                   <td className="row-actions">
-                    <button type="button" onClick={() => editIngredient(ingredient)}>Edit</button>
-                    <button
-                      type="button"
+                    <ActionButton icon={Pencil} label="Edit" onClick={() => editIngredient(ingredient)} />
+                    <ActionButton
+                      icon={Power}
+                      label="Deactivate"
+                      variant="danger"
                       disabled={!canWrite || !ingredient.isActive || busy}
-                      onClick={() => void deactivate(`/api/admin/ingredients/${ingredient.id}/deactivate`, "Ingredient deactivated.")}
-                    >
-                      Deactivate
-                    </button>
+                      onClick={() => void runCatalogMutation({ action: () => deactivateIngredient(ingredient.id) }, "Ingredient deactivated.")}
+                    />
                   </td>
                 </tr>
               ))}
@@ -1219,13 +1129,10 @@ export function App() {
   function renderStations() {
     return (
       <section className="workspace" aria-labelledby="stations-title">
-        <div className="section-heading">
-          <h2 id="stations-title">Stations</h2>
-          <span>{stations.length} records</span>
-        </div>
+        <PanelIntro id="stations-title" title="Stations" detail={`${stations.length} records`} icon={ChefHat} />
         <div className="split-layout">
           <form className="editor-panel" onSubmit={event => void saveStation(event)}>
-            <h3>{editingStationId === null ? "New station" : "Edit station"}</h3>
+            <PanelTitle>{editingStationId === null ? "New station" : "Edit station"}</PanelTitle>
             <label>
               Code
               <input
@@ -1260,18 +1167,17 @@ export function App() {
               />
               Active
             </label>
-            <div className="form-actions">
-              <button className="primary-button" type="submit" disabled={!canWrite || busy}>Save</button>
-              <button
-                type="button"
+            <FormActions>
+              <ActionButton icon={Save} label="Save" type="submit" variant="primary" disabled={!canWrite || busy} />
+              <ActionButton
+                icon={X}
+                label="Clear"
                 onClick={() => {
                   setEditingStationId(null);
                   setStationForm(emptyStationForm);
                 }}
-              >
-                Clear
-              </button>
-            </div>
+              />
+            </FormActions>
           </form>
           <div className="table-panel">
             <table>
@@ -1285,24 +1191,25 @@ export function App() {
                 </tr>
               </thead>
               <tbody>
+                {stations.length === 0 && <EmptyRow colSpan={5} label="No stations yet." />}
                 {stations.map(station => (
                   <tr key={station.id}>
-                    <td>{station.code}</td>
+                    <td className="strong-cell">{station.code}</td>
                     <td>{station.name}</td>
                     <td>
                       <span className="color-chip" style={{ backgroundColor: station.displayColor }} />
                       {station.displayColor}
                     </td>
-                    <td><span className={station.isActive ? "status is-active" : "status"}>{statusLabel(station.isActive)}</span></td>
+                    <td><StatusBadge isActive={station.isActive} /></td>
                     <td className="row-actions">
-                      <button type="button" onClick={() => editStation(station)}>Edit</button>
-                      <button
-                        type="button"
+                      <ActionButton icon={Pencil} label="Edit" onClick={() => editStation(station)} />
+                      <ActionButton
+                        icon={Power}
+                        label="Deactivate"
+                        variant="danger"
                         disabled={!canWrite || !station.isActive || busy}
-                        onClick={() => void deactivate(`/api/admin/stations/${station.id}/deactivate`, "Station deactivated.")}
-                      >
-                        Deactivate
-                      </button>
+                        onClick={() => void runCatalogMutation({ action: () => deactivateStation(station.id) }, "Station deactivated.")}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -1313,4 +1220,163 @@ export function App() {
       </section>
     );
   }
+}
+
+function LoadingScreen() {
+  return (
+    <main className="login-screen is-loading">
+      <section className="login-panel" aria-labelledby="loading-title">
+        <p className="brand-mark">Dark Kitchen</p>
+        <h1 id="loading-title">{appMetadata.name}</h1>
+        <div className="empty-state">
+          <RefreshCw aria-hidden="true" />
+          <strong>Checking session</strong>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ActionButton({
+  icon: Icon,
+  label,
+  onClick,
+  disabled = false,
+  type = "button",
+  variant = "quiet"
+}: {
+  readonly icon: LucideIcon;
+  readonly label: string;
+  readonly onClick?: () => void;
+  readonly disabled?: boolean;
+  readonly type?: "button" | "submit";
+  readonly variant?: "primary" | "quiet" | "danger";
+}) {
+  return (
+    <button
+      type={type}
+      className={`action-button is-${variant}`}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <Icon aria-hidden="true" />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  detail
+}: {
+  readonly icon: LucideIcon;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+}) {
+  return (
+    <article className="metric-card">
+      <Icon aria-hidden="true" />
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        <small>{detail}</small>
+      </div>
+    </article>
+  );
+}
+
+function PanelIntro({
+  id,
+  title,
+  detail,
+  icon: Icon
+}: {
+  readonly id: string;
+  readonly title: string;
+  readonly detail: string;
+  readonly icon: LucideIcon;
+}) {
+  return (
+    <div className="panel-intro">
+      <div>
+        <span className="panel-icon"><Icon aria-hidden="true" /></span>
+        <h2 id={id}>{title}</h2>
+      </div>
+      <span>{detail}</span>
+    </div>
+  );
+}
+
+function PanelTitle({ children }: { readonly children: ReactNode }) {
+  return (
+    <h3 className="panel-title">
+      <ClipboardList aria-hidden="true" />
+      {children}
+    </h3>
+  );
+}
+
+function FormActions({ children }: { readonly children: ReactNode }) {
+  return <div className="form-actions">{children}</div>;
+}
+
+function Message({
+  children,
+  tone = "info"
+}: {
+  readonly children: ReactNode;
+  readonly tone?: "info" | "success" | "error";
+}) {
+  const Icon = tone === "success" ? CircleCheck : tone === "error" ? CircleAlert : ShieldCheck;
+  return (
+    <p className={`message is-${tone}`}>
+      <Icon aria-hidden="true" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function StatusBadge({ isActive }: { readonly isActive: boolean }) {
+  return (
+    <span className={isActive ? "status is-active" : "status"}>
+      {isActive ? "Active" : "Inactive"}
+    </span>
+  );
+}
+
+function EmptyRow({ colSpan, label }: { readonly colSpan: number; readonly label: string }) {
+  return (
+    <tr>
+      <td colSpan={colSpan}>
+        <div className="empty-row">
+          <Database aria-hidden="true" />
+          <span>{label}</span>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function tabCount(tabId: TabId, catalog: CatalogSnapshot) {
+  switch (tabId) {
+    case "brands":
+      return catalog.brands.length;
+    case "menu":
+      return catalog.products.length;
+    case "recipes":
+      return catalog.ingredients.length;
+    case "stations":
+      return catalog.stations.length;
+  }
+}
+
+function textOrDash(value: string | null | undefined) {
+  return value === null || value === undefined || value.length === 0 ? "-" : value;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
@@ -10,6 +11,10 @@ describe("Admin Panel metadata", () => {
   });
 
   it("renders the admin shell heading before auth resolves", () => {
-    expect(renderToString(createElement(App))).toContain("Admin Panel");
+    const queryClient = new QueryClient();
+
+    expect(renderToString(
+      createElement(QueryClientProvider, { client: queryClient }, createElement(App))
+    )).toContain("Admin Panel");
   });
 });
