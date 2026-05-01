@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
+import { MemoryRouter } from "react-router-dom";
 import { App } from "./App";
 import { appMetadata } from "./appMetadata";
 
@@ -14,7 +15,9 @@ describe("Admin Panel metadata", () => {
     const queryClient = new QueryClient();
 
     expect(renderToString(
-      createElement(QueryClientProvider, { client: queryClient }, createElement(App))
+      createElement(QueryClientProvider, { client: queryClient },
+        createElement(MemoryRouter, null, createElement(App))
+      )
     )).toContain("Admin Panel");
   });
 });
