@@ -5,7 +5,12 @@ export interface ApiClient {
 }
 
 export function createApiClient(baseUrl: string | undefined): ApiClient {
-  const normalizedBaseUrl = baseUrl?.replace(/\/+$/, "") ?? "";
+  let normalizedBaseUrl = baseUrl ?? "";
+
+  // Remove trailing slashes
+  while (normalizedBaseUrl.endsWith("/")) {
+    normalizedBaseUrl = normalizedBaseUrl.slice(0, -1);
+  }
 
   return {
     baseUrl: normalizedBaseUrl,
@@ -15,7 +20,13 @@ export function createApiClient(baseUrl: string | undefined): ApiClient {
         return path;
       }
 
-      return `${normalizedBaseUrl}/${path.replace(/^\/+/, "")}`;
+      // Remove leading slashes
+      let cleanPath = path;
+      while (cleanPath.startsWith("/")) {
+        cleanPath = cleanPath.slice(1);
+      }
+
+      return `${normalizedBaseUrl}/${cleanPath}`;
     }
   };
 }
