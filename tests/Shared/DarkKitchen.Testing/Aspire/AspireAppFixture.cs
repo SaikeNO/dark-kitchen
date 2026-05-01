@@ -5,6 +5,11 @@ namespace DarkKitchen.Testing.Aspire;
 public sealed class AspireAppFixture : IAsyncLifetime
 {
     private const string FixtureLockName = "DarkKitchen.AspireAppFixture";
+    private static readonly string LockFilePath = Path.Combine(
+        Path.GetTempPath(),
+        $"{FixtureLockName}.lock");
+
+    private static readonly object _localLock = new();
 
     private static readonly string[] TestAppHostArgs =
     [
@@ -13,8 +18,7 @@ public sealed class AspireAppFixture : IAsyncLifetime
     ];
 
     private DistributedApplication? _app;
-    private Semaphore? _fixtureLock;
-    private bool _hasFixtureLock;
+    private FileStream? _lockFile;
 
     public static TimeSpan DefaultTimeout { get; } =
         Environment.GetEnvironmentVariable("CI") is null
@@ -72,39 +76,70 @@ public sealed class AspireAppFixture : IAsyncLifetime
 
     private async Task AcquireFixtureLockAsync()
     {
-        _fixtureLock = new Semaphore(1, 1, FixtureLockName);
         var timeout = Environment.GetEnvironmentVariable("CI") is null
             ? TimeSpan.FromMinutes(15)
             : TimeSpan.FromMinutes(30);
 
-        _hasFixtureLock = await Task.Run(() => _fixtureLock.WaitOne(timeout));
-        if (!_hasFixtureLock)
+        var deadline = DateTime.UtcNow.Add(timeout);
+        var lockAcquired = false;
+
+        while (DateTime.UtcNow < deadline)
         {
-            _fixtureLock.Dispose();
-            _fixtureLock = null;
+            lock (_localLock)
+            {
+                try
+                {
+                    _lockFile = new FileStream(
+                        LockFilePath,
+                        FileMode.Create,
+                        FileAccess.Write,
+                        FileShare.None,
+                        1,
+                        useAsync: true);
+
+                    lockAcquired = true;
+                }
+                catch (IOException)
+                {
+                    // Lock file is in use by another process
+                }
+            }
+
+            if (lockAcquired)
+                break;
+
+            await Task.Delay(100);
+        }
+
+        if (!lockAcquired)
+        {
             throw new TimeoutException($"Timed out waiting for the {FixtureLockName} test fixture lock.");
         }
     }
 
     private void ReleaseFixtureLock()
     {
-        if (_fixtureLock is null)
+        lock (_localLock)
         {
-            return;
-        }
-
-        try
-        {
-            if (_hasFixtureLock)
+            if (_lockFile is not null)
             {
-                _fixtureLock.Release();
+                try
+                {
+                    _lockFile.Dispose();
+                }
+                finally
+                {
+                    _lockFile = null;
+                    try
+                    {
+                        File.Delete(LockFilePath);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
             }
-        }
-        finally
-        {
-            _fixtureLock.Dispose();
-            _fixtureLock = null;
-            _hasFixtureLock = false;
         }
     }
 }
