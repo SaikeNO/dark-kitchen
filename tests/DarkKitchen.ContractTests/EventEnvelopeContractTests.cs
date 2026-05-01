@@ -15,7 +15,7 @@ public sealed class EventEnvelopeContractTests
     [Fact]
     public void KnownIntegrationEventTypes_AreStableAndUnique()
     {
-        Assert.Equal(8, KnownIntegrationEventTypes.All.Count);
+        Assert.Equal(13, KnownIntegrationEventTypes.All.Count);
         Assert.Equal(KnownIntegrationEventTypes.All.Count, KnownIntegrationEventTypes.All.Distinct(StringComparer.Ordinal).Count());
         Assert.All(KnownIntegrationEventTypes.All, eventType =>
         {
@@ -278,6 +278,155 @@ public sealed class EventEnvelopeContractTests
               "payload": {
                 "orderId": "0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad",
                 "pickupCode": "A-42"
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.MenuItemChanged,
+            new MenuItemChanged(
+                Guid.Parse("887ff5ea-620b-4574-aeb9-9c97b3be4216"),
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001"),
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0002"),
+                "Classic Smash",
+                "Double patty burger",
+                32.90m,
+                "PLN",
+                true),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "menu.item_changed",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "productId": "887ff5ea-620b-4574-aeb9-9c97b3be4216",
+                "brandId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001",
+                "categoryId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0002",
+                "name": "Classic Smash",
+                "description": "Double patty burger",
+                "price": 32.90,
+                "currency": "PLN",
+                "isActive": true
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.ProductPriceChanged,
+            new ProductPriceChanged(
+                Guid.Parse("887ff5ea-620b-4574-aeb9-9c97b3be4216"),
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001"),
+                34.50m,
+                "PLN"),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "product.price_changed",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "productId": "887ff5ea-620b-4574-aeb9-9c97b3be4216",
+                "brandId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001",
+                "price": 34.50,
+                "currency": "PLN"
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.RecipeChanged,
+            new RecipeChanged(
+                Guid.Parse("887ff5ea-620b-4574-aeb9-9c97b3be4216"),
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001"),
+                [
+                    new RecipeChangedItem(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0004"), "Bun", "pcs", 1m),
+                    new RecipeChangedItem(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0005"), "Patty", "g", 180m)
+                ]),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "recipe.changed",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "productId": "887ff5ea-620b-4574-aeb9-9c97b3be4216",
+                "brandId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001",
+                "items": [
+                  {
+                    "ingredientId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0004",
+                    "name": "Bun",
+                    "unit": "pcs",
+                    "quantity": 1
+                  },
+                  {
+                    "ingredientId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0005",
+                    "name": "Patty",
+                    "unit": "g",
+                    "quantity": 180
+                  }
+                ]
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.StationChanged,
+            new StationChanged(
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003"),
+                "GRILL",
+                "Grill",
+                "#2f7d57",
+                true),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "station.changed",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "stationId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003",
+                "code": "GRILL",
+                "name": "Grill",
+                "displayColor": "#2f7d57",
+                "isActive": true
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.ProductStationRoutingChanged,
+            new ProductStationRoutingChanged(
+                Guid.Parse("887ff5ea-620b-4574-aeb9-9c97b3be4216"),
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001"),
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003"),
+                "GRILL"),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "product.station_routing_changed",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "productId": "887ff5ea-620b-4574-aeb9-9c97b3be4216",
+                "brandId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001",
+                "stationId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003",
+                "stationCode": "GRILL"
               }
             }
             """

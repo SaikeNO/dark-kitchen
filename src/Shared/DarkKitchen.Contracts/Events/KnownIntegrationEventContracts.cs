@@ -30,6 +30,21 @@ public static class KnownIntegrationEventContracts
     public static readonly IntegrationEventContract OrderReadyForPickup =
         Create<OrderReadyForPickup>(KnownIntegrationEventTypes.OrderReadyForPickup);
 
+    public static readonly IntegrationEventContract MenuItemChanged =
+        Create<MenuItemChanged>(KnownIntegrationEventTypes.MenuItemChanged);
+
+    public static readonly IntegrationEventContract ProductPriceChanged =
+        Create<ProductPriceChanged>(KnownIntegrationEventTypes.ProductPriceChanged);
+
+    public static readonly IntegrationEventContract RecipeChanged =
+        Create<RecipeChanged>(KnownIntegrationEventTypes.RecipeChanged);
+
+    public static readonly IntegrationEventContract StationChanged =
+        Create<StationChanged>(KnownIntegrationEventTypes.StationChanged);
+
+    public static readonly IntegrationEventContract ProductStationRoutingChanged =
+        Create<ProductStationRoutingChanged>(KnownIntegrationEventTypes.ProductStationRoutingChanged);
+
     public static IReadOnlyList<IntegrationEventContract> All { get; } =
     [
         OrderPlaced,
@@ -39,7 +54,12 @@ public static class KnownIntegrationEventContracts
         ItemPreparationStarted,
         ItemPreparationCompleted,
         OrderReadyForPacking,
-        OrderReadyForPickup
+        OrderReadyForPickup,
+        MenuItemChanged,
+        ProductPriceChanged,
+        RecipeChanged,
+        StationChanged,
+        ProductStationRoutingChanged
     ];
 
     public static string EventTypeFor<TPayload>()

@@ -33,16 +33,21 @@ public static class IntegrationEventTopology
             [DarkKitchenService.Inventory] = CreateSubscription(
                 DarkKitchenService.Inventory,
                 InventoryQueue,
-                KnownIntegrationEventTypes.OrderPlaced),
+                KnownIntegrationEventTypes.OrderPlaced,
+                KnownIntegrationEventTypes.RecipeChanged),
             [DarkKitchenService.Kds] = CreateSubscription(
                 DarkKitchenService.Kds,
                 KdsQueue,
-                KnownIntegrationEventTypes.OrderAccepted),
+                KnownIntegrationEventTypes.OrderAccepted,
+                KnownIntegrationEventTypes.StationChanged,
+                KnownIntegrationEventTypes.ProductStationRoutingChanged),
             [DarkKitchenService.OrderManagement] = CreateSubscription(
                 DarkKitchenService.OrderManagement,
                 OrderManagementQueue,
                 KnownIntegrationEventTypes.InventoryReserved,
-                KnownIntegrationEventTypes.InventoryReservationFailed),
+                KnownIntegrationEventTypes.InventoryReservationFailed,
+                KnownIntegrationEventTypes.MenuItemChanged,
+                KnownIntegrationEventTypes.ProductPriceChanged),
             [DarkKitchenService.Packing] = CreateSubscription(
                 DarkKitchenService.Packing,
                 PackingQueue,
@@ -51,6 +56,8 @@ public static class IntegrationEventTopology
             [DarkKitchenService.Storefront] = CreateSubscription(
                 DarkKitchenService.Storefront,
                 StorefrontQueue,
+                KnownIntegrationEventTypes.MenuItemChanged,
+                KnownIntegrationEventTypes.ProductPriceChanged,
                 KnownIntegrationEventTypes.InventoryReservationFailed,
                 KnownIntegrationEventTypes.OrderAccepted,
                 KnownIntegrationEventTypes.OrderReadyForPickup)

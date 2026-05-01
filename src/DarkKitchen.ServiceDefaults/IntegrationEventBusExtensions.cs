@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Wolverine;
+using Wolverine.EntityFrameworkCore;
 using Wolverine.Postgresql;
 using Wolverine.RabbitMQ;
 using Wolverine.RabbitMQ.Internal;
@@ -44,6 +45,7 @@ public static class IntegrationEventBusExtensions
 
             DeclareEventExchanges(rabbitMq);
             ConfigureEventPublishers(options);
+            options.UseEntityFrameworkCoreTransactions();
 
             if (subscription.EventTypes.Count > 0)
             {
@@ -126,6 +128,26 @@ public static class IntegrationEventBusExtensions
 
         options.PublishMessage<IntegrationEventEnvelope<OrderReadyForPickup>>()
             .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.OrderReadyForPickup))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<MenuItemChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.MenuItemChanged))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<ProductPriceChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.ProductPriceChanged))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<RecipeChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.RecipeChanged))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<StationChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.StationChanged))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<ProductStationRoutingChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.ProductStationRoutingChanged))
             .UseDurableOutbox();
     }
 }

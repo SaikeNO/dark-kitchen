@@ -33,7 +33,12 @@ for (const app of apps) {
 
     page.on("console", message => {
       if (message.type() === "error") {
-        browserErrors.push(message.text());
+        const text = message.text();
+        if (app.name === "admin-panel" && text.includes("status of 401")) {
+          return;
+        }
+
+        browserErrors.push(text);
       }
     });
 
@@ -45,6 +50,12 @@ for (const app of apps) {
 
     await expect(page.getByRole("heading", { name: app.heading })).toBeVisible();
     await expect(page.getByText("Dark Kitchen", { exact: true })).toBeVisible();
+    if (app.name === "admin-panel") {
+      await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+      expect(browserErrors).toEqual([]);
+      return;
+    }
+
     await expect(page.locator("dd").getByText(app.context, { exact: true })).toBeVisible();
     await expect(page.locator("dd").getByText("Foundation ready", { exact: true })).toBeVisible();
     expect(browserErrors).toEqual([]);
