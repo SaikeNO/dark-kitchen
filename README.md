@@ -76,9 +76,10 @@ Testy:
 |   |-- Shared/                    # Wspólne kontrakty
 |   `-- Web/                       # Aplikacje React/Vite
 |-- tests/
-|   |-- DarkKitchen.ArchitectureTests/
-|   |-- DarkKitchen.ContractTests/
-|   |-- DarkKitchen.IntegrationTests/
+|   |-- Architecture/
+|   |-- Contracts/
+|   |-- Integration/
+|   |-- Shared/
 |   `-- e2e/                       # Testy Playwright
 |-- DarkKitchen.slnx
 |-- package.json
@@ -212,6 +213,12 @@ Testy .NET:
 
 ```powershell
 dotnet test DarkKitchen.slnx
+```
+
+Stabilny tryb dla integracji Aspire uruchamia projekty per serwis sekwencyjnie:
+
+```powershell
+npm run test:integration
 ```
 
 Wybrane warstwy:

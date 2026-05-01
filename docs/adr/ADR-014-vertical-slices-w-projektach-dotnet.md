@@ -99,4 +99,4 @@ Projekty wspierające, które nie reprezentują przypadków użycia API, takie j
 
 ## 7. Egzekwowanie
 
-Dodajemy testy architektoniczne w `tests/DarkKitchen.ArchitectureTests`. Testy wymagają projektów `Api`, `Domain`, `Features` i `Infrastructure` w każdym bounded context, pilnują kierunku referencji oraz blokują umieszczanie kodu use-case’ów w projekcie `Api`.
+Dodajemy testy architektoniczne w `tests/Architecture/DarkKitchen.ArchitectureTests`. Testy wymagają projektów `Api`, `Domain`, `Features` i `Infrastructure` w każdym bounded context, pilnują kierunku referencji oraz blokują umieszczanie kodu use-case’ów w projekcie `Api`.

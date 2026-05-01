@@ -43,8 +43,29 @@
     <Project Path="src/Services/Storefront/DarkKitchen.Storefront.Infrastructure/DarkKitchen.Storefront.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/DarkKitchen.ArchitectureTests/DarkKitchen.ArchitectureTests.csproj" />
-    <Project Path="tests/DarkKitchen.ContractTests/DarkKitchen.ContractTests.csproj" />
-    <Project Path="tests/DarkKitchen.IntegrationTests/DarkKitchen.IntegrationTests.csproj" />
+    <Project Path="tests/Architecture/DarkKitchen.ArchitectureTests/DarkKitchen.ArchitectureTests.csproj" />
+    <Project Path="tests/Contracts/DarkKitchen.ContractTests/DarkKitchen.ContractTests.csproj" />
+    <Project Path="tests/Shared/DarkKitchen.Testing/DarkKitchen.Testing.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/AppHost/">
+    <Project Path="tests/Integration/AppHost/DarkKitchen.AppHost.IntegrationTests/DarkKitchen.AppHost.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/Catalog/">
+    <Project Path="tests/Integration/Catalog/DarkKitchen.Catalog.IntegrationTests/DarkKitchen.Catalog.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/Inventory/">
+    <Project Path="tests/Integration/Inventory/DarkKitchen.Inventory.IntegrationTests/DarkKitchen.Inventory.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/Kds/">
+    <Project Path="tests/Integration/Kds/DarkKitchen.Kds.IntegrationTests/DarkKitchen.Kds.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/OrderManagement/">
+    <Project Path="tests/Integration/OrderManagement/DarkKitchen.OrderManagement.IntegrationTests/DarkKitchen.OrderManagement.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/Packing/">
+    <Project Path="tests/Integration/Packing/DarkKitchen.Packing.IntegrationTests/DarkKitchen.Packing.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Integration/Storefront/">
+    <Project Path="tests/Integration/Storefront/DarkKitchen.Storefront.IntegrationTests/DarkKitchen.Storefront.IntegrationTests.csproj" />
   </Folder>
 </Solution>

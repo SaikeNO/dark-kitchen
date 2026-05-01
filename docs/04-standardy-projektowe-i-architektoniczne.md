@@ -59,9 +59,12 @@ Ten dokument opisuje standardy, według których należy rozwijać i reviewować
 
 ## Testy
 
-- Każda zmiana domenowa musi mieć test jednostkowy lub integracyjny pokrywający najważniejszy przypadek biznesowy.
-- Zmiana kontraktu zdarzenia wymaga testu kontraktowego.
+- Każdy endpoint handler `XEndpoint.cs` musi mieć odpowiadający test integracyjny `XEndpointTests.cs` w projekcie integracyjnym danego serwisu.
+- Testy integracyjne backendu traktują API jako black box: używają HTTP i własnych DTO testowych, bez referencji do `Features` ani `Infrastructure`.
+- Zmiana kontraktu zdarzenia wymaga testu kontraktowego w `DarkKitchen.ContractTests`.
+- Testy kontraktowe dotyczą zdarzeń integracyjnych, a nie snapshotów HTTP.
 - Przepływy między serwisami powinny być testowane przez Aspire.Hosting.Testing.
+- Testy jednostkowe dodajemy dla nietrywialnych encji domenowych i agregatów z realnymi inwariantami, kalkulacją, przejściami stanu lub idempotencją.
 - Krytyczne ścieżki UI powinny mieć test Playwright.
 - Brak testu przy zmianie ryzykownej wymaga wyraźnego uzasadnienia w PR.
 
