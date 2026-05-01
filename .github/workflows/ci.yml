@@ -77,12 +77,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        rm -rf node_modules
-        npm ci --verbose
+        run: |
+          rm -rf node_modules
+          npm ci --verbose
         timeout-minutes: 15
-        continue-on-error: false
-        with:
-          retry-attempts: 3
 
       - name: Lint
         run: npm run lint
