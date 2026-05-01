@@ -4,17 +4,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+    <ProjectReference Include="..\DarkKitchen.Catalog.Features\DarkKitchen.Catalog.Features.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\DarkKitchen.Catalog.Infrastructure\DarkKitchen.Catalog.Infrastructure.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\..\DarkKitchen.ServiceDefaults\DarkKitchen.ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using DarkKitchen.Contracts.Events;
 using DarkKitchen.ServiceDefaults;
+using DarkKitchen.Kds.Features.Features.ServiceInfo;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,23 +12,6 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.MapDefaultEndpoints();
-
-app.MapGet("/", () => Results.Ok(new
-{
-    service = "KDS Service",
-    boundedContext = "Kitchen",
-    status = "ready"
-}));
-
-app.MapGet("/api/info", () => Results.Ok(new
-{
-    service = "KDS Service",
-    responsibilities = new[]
-    {
-        "Kitchen tickets",
-        "Station task routing",
-        "Realtime kitchen display"
-    }
-}));
+app.MapServiceInfoEndpoints();
 
 app.Run();

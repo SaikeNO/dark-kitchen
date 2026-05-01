@@ -1,5 +1,6 @@
 using DarkKitchen.Contracts.Events;
 using DarkKitchen.ServiceDefaults;
+using DarkKitchen.OrderManagement.Features.Features.ServiceInfo;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,23 +12,6 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.MapDefaultEndpoints();
-
-app.MapGet("/", () => Results.Ok(new
-{
-    service = "Order Management Service",
-    boundedContext = "Orders",
-    status = "ready"
-}));
-
-app.MapGet("/api/info", () => Results.Ok(new
-{
-    service = "Order Management Service",
-    responsibilities = new[]
-    {
-        "Order ingestion",
-        "Order state machine",
-        "Saga coordination"
-    }
-}));
+app.MapServiceInfoEndpoints();
 
 app.Run();

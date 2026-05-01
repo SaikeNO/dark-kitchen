@@ -4,6 +4,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DarkKitchen.Packing.Features\DarkKitchen.Packing.Features.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\DarkKitchen.Packing.Infrastructure\DarkKitchen.Packing.Infrastructure.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\..\DarkKitchen.ServiceDefaults\DarkKitchen.ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 </Project>

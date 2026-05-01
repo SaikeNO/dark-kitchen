@@ -21,6 +21,11 @@ Ten dokument opisuje standardy, według których należy rozwijać i reviewować
 
 ## Backend .NET
 
+- Każdy bounded context serwisu .NET ma projekty klas `Api`, `Domain`, `Features` i `Infrastructure`, zgodnie z ADR 014.
+- `Api` jest composition rootem. Nie umieszczamy w nim logiki endpointów ani konkretnych use-case’ów.
+- Każdy nowy endpoint Minimal API trafia do slice’a w projekcie `Features`; request/response DTO, walidacja i mapping powinny być możliwie blisko tego endpointu.
+- Encje domenowe trzymamy w projekcie `Domain`, po jednej encji na plik. Preferujemy pragmatyczne DDD: fabryki i metody zmiany stanu zamiast publicznych setterów.
+- `DbContext` może znajdować się w `Features/Application`, bo w tym projekcie jest traktowany jako aplikacyjna abstrakcja dostępu do danych. Provider EF, design-time factory, migracje i inicjalizacja bazy należą do `Infrastructure`.
 - Projekty API używają ASP.NET Core Minimal APIs lub kontrolerów tylko wtedy, gdy moduł faktycznie potrzebuje rozbudowanego modelu MVC.
 - Endpointy publiczne powinny zwracać stabilne DTO, a nie encje domenowe lub encje EF.
 - Walidacja wejścia ma być jawna i blisko granicy API.
@@ -88,4 +93,3 @@ Agent code review powinien blokować zmianę, jeśli:
 - hardcoduje sekret, connection string lub token,
 - usuwa testy bez równoważnego pokrycia,
 - ignoruje zaakceptowane ADR-y bez nowej decyzji architektonicznej.
-

@@ -6,13 +6,41 @@
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/DarkKitchen.Contracts/DarkKitchen.Contracts.csproj" />
   </Folder>
-  <Folder Name="/src/Services/">
+  <Folder Name="/src/Services/Catalog/">
     <Project Path="src/Services/Catalog/DarkKitchen.Catalog.Api/DarkKitchen.Catalog.Api.csproj" />
+    <Project Path="src/Services/Catalog/DarkKitchen.Catalog.Domain/DarkKitchen.Catalog.Domain.csproj" />
+    <Project Path="src/Services/Catalog/DarkKitchen.Catalog.Features/DarkKitchen.Catalog.Features.csproj" />
+    <Project Path="src/Services/Catalog/DarkKitchen.Catalog.Infrastructure/DarkKitchen.Catalog.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Inventory/">
     <Project Path="src/Services/Inventory/DarkKitchen.Inventory.Api/DarkKitchen.Inventory.Api.csproj" />
+    <Project Path="src/Services/Inventory/DarkKitchen.Inventory.Domain/DarkKitchen.Inventory.Domain.csproj" />
+    <Project Path="src/Services/Inventory/DarkKitchen.Inventory.Features/DarkKitchen.Inventory.Features.csproj" />
+    <Project Path="src/Services/Inventory/DarkKitchen.Inventory.Infrastructure/DarkKitchen.Inventory.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Kds/">
     <Project Path="src/Services/Kds/DarkKitchen.Kds.Api/DarkKitchen.Kds.Api.csproj" />
+    <Project Path="src/Services/Kds/DarkKitchen.Kds.Domain/DarkKitchen.Kds.Domain.csproj" />
+    <Project Path="src/Services/Kds/DarkKitchen.Kds.Features/DarkKitchen.Kds.Features.csproj" />
+    <Project Path="src/Services/Kds/DarkKitchen.Kds.Infrastructure/DarkKitchen.Kds.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/OrderManagement/">
     <Project Path="src/Services/OrderManagement/DarkKitchen.OrderManagement.Api/DarkKitchen.OrderManagement.Api.csproj" />
+    <Project Path="src/Services/OrderManagement/DarkKitchen.OrderManagement.Domain/DarkKitchen.OrderManagement.Domain.csproj" />
+    <Project Path="src/Services/OrderManagement/DarkKitchen.OrderManagement.Features/DarkKitchen.OrderManagement.Features.csproj" />
+    <Project Path="src/Services/OrderManagement/DarkKitchen.OrderManagement.Infrastructure/DarkKitchen.OrderManagement.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Packing/">
     <Project Path="src/Services/Packing/DarkKitchen.Packing.Api/DarkKitchen.Packing.Api.csproj" />
+    <Project Path="src/Services/Packing/DarkKitchen.Packing.Domain/DarkKitchen.Packing.Domain.csproj" />
+    <Project Path="src/Services/Packing/DarkKitchen.Packing.Features/DarkKitchen.Packing.Features.csproj" />
+    <Project Path="src/Services/Packing/DarkKitchen.Packing.Infrastructure/DarkKitchen.Packing.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Storefront/">
     <Project Path="src/Services/Storefront/DarkKitchen.Storefront.Api/DarkKitchen.Storefront.Api.csproj" />
+    <Project Path="src/Services/Storefront/DarkKitchen.Storefront.Domain/DarkKitchen.Storefront.Domain.csproj" />
+    <Project Path="src/Services/Storefront/DarkKitchen.Storefront.Features/DarkKitchen.Storefront.Features.csproj" />
+    <Project Path="src/Services/Storefront/DarkKitchen.Storefront.Infrastructure/DarkKitchen.Storefront.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/DarkKitchen.ArchitectureTests/DarkKitchen.ArchitectureTests.csproj" />
