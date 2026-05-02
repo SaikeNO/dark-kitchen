@@ -11,6 +11,13 @@ public sealed class StorefrontApiClient(HttpClient httpClient) : IDisposable
     public static Guid DemoBrandGuid => Guid.Parse(DemoBrandId);
     public static Guid DemoMenuItemGuid => Guid.Parse(DemoMenuItemId);
 
+    public async Task<IReadOnlyList<StorefrontContextResponse>> ListBrandsAsync()
+    {
+        using var response = await httpClient.GetAsync("/api/storefront/brands");
+        await response.AssertSuccessAsync();
+        return await response.ReadJsonAsync<IReadOnlyList<StorefrontContextResponse>>();
+    }
+
     public async Task<StorefrontContextResponse> GetContextAsync()
     {
         using var response = await httpClient.GetAsync($"/api/storefront/context?brandId={DemoBrandId}");

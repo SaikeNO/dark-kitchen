@@ -31,6 +31,7 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (action: () => Promise<unknown>) => action(),
@@ -43,11 +44,13 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
   });
 
   function clearForm() {
+    clearLogoPreview();
     setForm(emptyForm);
     setEditingId(null);
   }
 
   function edit(brand: Brand) {
+    clearLogoPreview();
     setEditingId(brand.id);
     setForm({
       name: brand.name,
@@ -102,6 +105,9 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
       return;
     }
 
+    clearLogoPreview();
+    const previewUrl = URL.createObjectURL(file);
+    setLogoPreviewUrl(previewUrl);
     try {
       const uploaded = await uploadBrandLogo(file);
       setForm(current => ({ ...current, logoUrl: uploaded.url }));
@@ -109,6 +115,16 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
     } catch (error) {
       toast.error(errorMessage(error));
     }
+  }
+
+  function clearLogoPreview() {
+    setLogoPreviewUrl(current => {
+      if (current !== null) {
+        URL.revokeObjectURL(current);
+      }
+
+      return null;
+    });
   }
 
   return (
@@ -137,7 +153,7 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
             {form.logoUrl.length > 0 && (
               <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="grid size-16 place-items-center overflow-hidden rounded-md bg-white dark:bg-zinc-950">
-                  <img src={form.logoUrl} alt="" className="max-h-full max-w-full object-contain" />
+                  <img src={logoPreviewUrl ?? form.logoUrl} alt="" className="max-h-full max-w-full object-contain" />
                 </div>
                 <span className="min-w-0 truncate text-sm font-semibold text-zinc-600 dark:text-zinc-400">{form.logoUrl}</span>
               </div>

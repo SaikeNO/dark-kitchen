@@ -1,156 +1,206 @@
-import { createApiClient } from "@dark-kitchen/api-client";
-import { clientConfig } from "@dark-kitchen/config";
-import { CreditCard, LogIn, Minus, Plus, ShoppingBag, User, X } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChefHat,
+  CreditCard,
+  LogIn,
+  Minus,
+  Plus,
+  Search,
+  ShoppingBag,
+  Store,
+  SunMoon,
+  User,
+  X
+} from "lucide-react";
+import { type CSSProperties, type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { Link, Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import {
+  type BrandContext,
+  type CartLine,
+  type CartResponse,
+  type CustomerForm,
+  type MenuProduct,
+  type Session,
+  type Theme,
+  checkout,
+  createCart,
+  getMenu,
+  getSession,
+  listBrands,
+  login,
+  logout,
+  register,
+  updateCart
+} from "./api/storefrontApi";
+import { errorMessage } from "./api/http";
 import { appMetadata } from "./appMetadata";
 import "./styles.css";
 
-const apiClient = createApiClient(clientConfig.apiBaseUrl);
-
-interface Theme {
-  readonly primaryColor: string;
-  readonly accentColor: string;
-  readonly backgroundColor: string;
-  readonly textColor: string;
-}
-
-interface BrandContext {
-  readonly brandId: string;
-  readonly brandName: string;
-  readonly description: string | null;
-  readonly logoUrl: string | null;
-  readonly heroTitle: string | null;
-  readonly heroSubtitle: string | null;
-  readonly theme: Theme;
-}
-
-interface MenuResponse {
-  readonly brand: BrandContext;
-  readonly categories: readonly MenuCategory[];
-}
-
-interface MenuCategory {
-  readonly id: string;
-  readonly name: string;
-  readonly products: readonly MenuProduct[];
-}
-
-interface MenuProduct {
-  readonly id: string;
-  readonly categoryId: string;
-  readonly name: string;
-  readonly description: string | null;
-  readonly imageUrl: string | null;
-  readonly price: number;
-  readonly currency: string;
-}
-
-interface CartLine {
-  readonly menuItemId: string;
-  readonly quantity: number;
-}
-
-interface CartResponse {
-  readonly cartId: string;
-  readonly brandId: string;
-  readonly totalPrice: number;
-  readonly currency: string;
-  readonly items: readonly CartItemResponse[];
-}
-
-interface CartItemResponse {
-  readonly menuItemId: string;
-  readonly name: string;
-  readonly imageUrl: string | null;
-  readonly quantity: number;
-  readonly unitPrice: number;
-  readonly currency: string;
-  readonly lineTotal: number;
-}
-
-interface Session {
-  readonly id: string;
-  readonly email: string;
-  readonly displayName: string | null;
-  readonly phone: string | null;
-}
-
-interface CheckoutResponse {
-  readonly paymentId: string;
-  readonly paymentStatus: string;
-  readonly orderId: string | null;
-  readonly correlationId: string | null;
-  readonly failureReason: string | null;
-}
-
-interface CustomerForm {
-  readonly displayName: string;
-  readonly phone: string;
-  readonly deliveryNote: string;
-}
+const emptyCustomer: CustomerForm = { displayName: "", phone: "", deliveryNote: "" };
+type ColorMode = "light" | "dark";
 
 export function App() {
-  const [menu, setMenu] = useState<MenuResponse | null>(null);
-  const [cart, setCart] = useState<CartResponse | null>(null);
+  const [colorMode, setColorMode] = useState<ColorMode>(() => readColorMode());
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = colorMode;
+    localStorage.setItem("dark-kitchen-storefront-theme", colorMode);
+  }, [colorMode]);
+
+  function toggleColorMode() {
+    setColorMode(current => current === "light" ? "dark" : "light");
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<BrandPicker colorMode={colorMode} onToggleColorMode={toggleColorMode} />} />
+      <Route path="/brands/:brandId" element={<StorefrontPage colorMode={colorMode} onToggleColorMode={toggleColorMode} />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function BrandPicker({
+  colorMode,
+  onToggleColorMode
+}: {
+  readonly colorMode: ColorMode;
+  readonly onToggleColorMode: () => void;
+}) {
+  const [searchParams] = useSearchParams();
+  const legacyBrandId = searchParams.get("brandId");
+  const brandsQuery = useQuery({
+    queryKey: ["storefront", "brands"],
+    queryFn: ({ signal }) => listBrands(signal)
+  });
+
+  if (legacyBrandId !== null && legacyBrandId.length > 0) {
+    return <Navigate to={`/brands/${encodeURIComponent(legacyBrandId)}`} replace />;
+  }
+
+  return (
+    <main className="brand-select-shell">
+      <header className="brand-select-header">
+        <div className="brand-select-title">
+          <div className="store-mark"><Store aria-hidden="true" /></div>
+          <div>
+            <p>Dark Kitchen</p>
+            <h1>Wybierz marke</h1>
+          </div>
+        </div>
+        <ThemeToggle colorMode={colorMode} onToggle={onToggleColorMode} />
+      </header>
+
+      <section className="brand-select-hero">
+        <p className="eyebrow">Storefront</p>
+        <h2>Zamow z aktywnej marki</h2>
+        <p>Menu, kolory i logo pochodza z konfiguracji w panelu admina.</p>
+      </section>
+
+      {brandsQuery.isPending && <StateMessage label="Ladowanie marek..." />}
+      {brandsQuery.isError && <StateMessage label={errorMessage(brandsQuery.error, "Nie udalo sie pobrac marek.")} />}
+
+      {brandsQuery.data !== undefined && (
+        <div className="brand-grid">
+          {brandsQuery.data.map(brand => (
+            <Link
+              key={brand.brandId}
+              className="brand-card"
+              style={themeStyle(brand.theme)}
+              to={`/brands/${brand.brandId}`}
+            >
+              <BrandAvatar brand={brand} />
+              <div>
+                <h3>{brand.brandName}</h3>
+                <p>{brand.heroSubtitle ?? brand.description ?? "Menu gotowe do checkoutu."}</p>
+              </div>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+function StorefrontPage({
+  colorMode,
+  onToggleColorMode
+}: {
+  readonly colorMode: ColorMode;
+  readonly onToggleColorMode: () => void;
+}) {
+  const routeBrandId = useParams().brandId;
+  const brandId = routeBrandId ?? "";
+  const queryClient = useQueryClient();
   const [cartOpen, setCartOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"success" | "failed">("success");
-  const [customer, setCustomer] = useState<CustomerForm>({ displayName: "", phone: "", deliveryNote: "" });
-  const [checkout, setCheckout] = useState<CheckoutResponse | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [customer, setCustomer] = useState<CustomerForm>(emptyCustomer);
+  const [checkoutResult, setCheckoutResult] = useState<null | { readonly status: string; readonly message: string }>(null);
 
-  const brandQuery = useMemo(() => brandQueryString(), []);
+  const menuQuery = useQuery({
+    queryKey: ["storefront", "menu", brandId],
+    queryFn: ({ signal }) => getMenu(brandId, signal),
+    enabled: brandId.length > 0
+  });
+  const sessionQuery = useQuery({
+    queryKey: ["storefront", "session"],
+    queryFn: ({ signal }) => getSession(signal)
+  });
+  const cartQuery = useQuery({
+    queryKey: cartKey(brandId),
+    queryFn: () => prepareCart(brandId),
+    enabled: brandId.length > 0
+  });
+
+  const menu = menuQuery.data;
+  const cart = cartQuery.data;
+  const session = sessionQuery.data ?? null;
   const productsById = useMemo(() => {
     const products = menu?.categories.flatMap(category => category.products) ?? [];
     return new Map(products.map(product => [product.id, product]));
   }, [menu]);
 
   useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        const [loadedMenu, loadedSession] = await Promise.all([
-          getJson<MenuResponse>(`/api/storefront/menu${brandQuery}`),
-          getJson<Session | null>("/api/storefront/auth/me")
-        ]);
-        if (!active) {
-          return;
-        }
-
-        setMenu(loadedMenu);
-        setSession(loadedSession);
-        applyTheme(loadedMenu.brand.theme);
-        const stored = readStoredCart(loadedMenu.brand.brandId);
-        const created = await postJson<CartResponse>(`/api/storefront/carts${brandQuery}`, { cartId: stored?.cartId ?? null });
-        const synced = stored?.items.length
-          ? await patchCart(created.cartId, stored.items, brandQuery)
-          : created;
-        if (active) {
-          setCart(synced);
-          writeStoredCart(loadedMenu.brand.brandId, synced);
-        }
-      } catch (loadError) {
-        if (active) {
-          setError(loadError instanceof Error ? loadError.message : "Nie udało się załadować sklepu.");
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
+    if (menu !== undefined) {
+      applyTheme(menu.brand.theme);
     }
+  }, [menu]);
 
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [brandQuery]);
+  const cartMutation = useMutation({
+    mutationFn: (items: readonly CartLine[]) => {
+      const current = queryClient.getQueryData<CartResponse>(cartKey(brandId));
+      if (current === undefined) {
+        throw new Error("Koszyk nie jest gotowy.");
+      }
 
-  async function setQuantity(product: MenuProduct, quantity: number) {
-    if (cart === null || menu === null) {
+      return updateCart(brandId, current.cartId, items);
+    },
+    onSuccess: updated => {
+      queryClient.setQueryData(cartKey(brandId), updated);
+      writeStoredCart(brandId, updated);
+    }
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: () => {
+      if (cart === undefined) {
+        throw new Error("Koszyk nie jest gotowy.");
+      }
+
+      return checkout(brandId, cart.cartId, customer, paymentMode);
+    }
+  });
+
+  if (routeBrandId === undefined) {
+    return <Navigate to="/" replace />;
+  }
+
+  function setQuantity(product: MenuProduct, quantity: number) {
+    if (cart === undefined) {
       return;
     }
 
@@ -161,71 +211,60 @@ export function App() {
       nextItems.push({ menuItemId: product.id, quantity });
     }
 
-    const synced = await patchCart(cart.cartId, nextItems, brandQuery);
-    setCart(synced);
-    writeStoredCart(menu.brand.brandId, synced);
+    cartMutation.mutate(nextItems);
   }
 
   async function submitCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (cart === null || cart.items.length === 0) {
+    if (cart === undefined || cart.items.length === 0) {
       return;
     }
 
-    setBusy(true);
-    setCheckout(null);
+    setCheckoutResult(null);
     try {
-      const response = await postJson<CheckoutResponse>(`/api/storefront/checkout${brandQuery}`, {
-        cartId: cart.cartId,
-        customer,
-        mockPaymentResult: paymentMode
-      });
-      setCheckout(response);
-      if (response.paymentStatus === "Success" && menu !== null) {
-        const emptied = await patchCart(cart.cartId, [], brandQuery);
-        setCart(emptied);
-        writeStoredCart(menu.brand.brandId, emptied);
+      const response = await checkoutMutation.mutateAsync();
+      if (response.paymentStatus === "Success") {
+        await cartMutation.mutateAsync([]);
+        setCheckoutResult({ status: "success", message: `Order ${response.orderId ?? ""}`.trim() });
+        return;
       }
-    } catch (checkoutError) {
-      setError(checkoutError instanceof Error ? checkoutError.message : "Checkout failed.");
-    } finally {
-      setBusy(false);
+
+      setCheckoutResult({ status: "failed", message: response.failureReason ?? "Platnosc odrzucona." });
+    } catch (error) {
+      setCheckoutResult({ status: "failed", message: errorMessage(error, "Checkout nie powiodl sie.") });
     }
   }
 
-  if (loading) {
-    return <main className="storefront-screen center"><p>Ładowanie sklepu...</p></main>;
+  if (menuQuery.isPending || cartQuery.isPending) {
+    return <StateMessage label="Ladowanie sklepu..." />;
   }
 
-  if (error !== null || menu === null) {
-    return (
-      <main className="storefront-screen center">
-        <h1>{appMetadata.name}</h1>
-        <p>{error ?? "Sklep niedostępny."}</p>
-      </main>
-    );
+  if (menuQuery.isError || cartQuery.isError || menu === undefined || cart === undefined) {
+    return <StateMessage label={errorMessage(menuQuery.error ?? cartQuery.error, "Sklep niedostepny.")} />;
   }
 
-  const totalItems = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  const busy = checkoutMutation.isPending || cartMutation.isPending;
 
   return (
     <main className="storefront-shell">
       <header className="topbar">
-        <div className="brand-lockup">
-          {menu.brand.logoUrl !== null && <img src={menu.brand.logoUrl} alt="" />}
+        <Link className="brand-lockup" to="/">
+          <BrandAvatar brand={menu.brand} />
           <div>
             <p>Dark Kitchen</p>
             <h1>{menu.brand.brandName}</h1>
           </div>
-        </div>
+        </Link>
         <div className="topbar-actions">
+          <ThemeToggle colorMode={colorMode} onToggle={onToggleColorMode} />
           <button className="ghost-button" type="button" onClick={() => setAuthOpen(true)}>
             <User aria-hidden="true" />
-            {session?.displayName ?? session?.email ?? "Konto"}
+            <span>{session?.displayName ?? session?.email ?? "Konto"}</span>
           </button>
-          <button className="cart-button" type="button" onClick={() => setCartOpen(true)}>
+          <button className="cart-button desktop-cart-button" type="button" onClick={() => setCartOpen(true)}>
             <ShoppingBag aria-hidden="true" />
-            Koszyk
+            <span>Koszyk</span>
             <strong>{totalItems}</strong>
           </button>
         </div>
@@ -235,95 +274,187 @@ export function App() {
         <div>
           <p className="eyebrow">White-label Storefront</p>
           <h2>{menu.brand.heroTitle ?? menu.brand.brandName}</h2>
-          <p>{menu.brand.heroSubtitle ?? menu.brand.description ?? "Wybierz pozycje, opłać mock payment i wyślij zamówienie do kuchni."}</p>
+          <p>{menu.brand.heroSubtitle ?? menu.brand.description ?? "Szybki checkout, swieze menu, status zamowienia w OMS."}</p>
         </div>
       </section>
+
+      <nav className="category-tabs" aria-label="Kategorie menu">
+        {menu.categories.map(category => (
+          <a key={category.id} href={`#category-${category.id}`}>{category.name}</a>
+        ))}
+      </nav>
 
       <section className="menu-layout">
         <div className="menu-list">
           {menu.categories.map(category => (
-            <section key={category.id} className="category-section">
-              <h3>{category.name}</h3>
+            <section key={category.id} id={`category-${category.id}`} className="category-section">
+              <div className="category-heading">
+                <h3>{category.name}</h3>
+                <span>{category.products.length} pozycji</span>
+              </div>
               <div className="product-grid">
-                {category.products.map(product => {
-                  const quantity = cart?.items.find(item => item.menuItemId === product.id)?.quantity ?? 0;
-                  return (
-                    <article key={product.id} className="product-card">
-                      <div className="product-image">
-                        {product.imageUrl === null ? <span>{product.name}</span> : <img src={product.imageUrl} alt="" />}
-                      </div>
-                      <div className="product-body">
-                        <h4>{product.name}</h4>
-                        <p>{product.description ?? "Pozycja menu gotowa do checkoutu."}</p>
-                        <div className="product-footer">
-                          <strong>{money(product.price, product.currency)}</strong>
-                          {quantity === 0 ? (
-                            <button type="button" onClick={() => { void setQuantity(product, 1); }}>
-                              <Plus aria-hidden="true" /> Dodaj
-                            </button>
-                          ) : (
-                            <div className="stepper">
-                              <button type="button" aria-label={`Usuń ${product.name}`} onClick={() => { void setQuantity(product, quantity - 1); }}><Minus aria-hidden="true" /></button>
-                              <span>{quantity}</span>
-                              <button type="button" aria-label={`Dodaj ${product.name}`} onClick={() => { void setQuantity(product, quantity + 1); }}><Plus aria-hidden="true" /></button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                {category.products.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    quantity={cart.items.find(item => item.menuItemId === product.id)?.quantity ?? 0}
+                    onQuantity={setQuantity}
+                  />
+                ))}
               </div>
             </section>
           ))}
         </div>
 
         <aside className="checkout-panel">
-          <h3>Checkout</h3>
-          <CartSummary cart={cart} productsById={productsById} onQuantity={setQuantity} />
-          <form onSubmit={event => { void submitCheckout(event); }}>
-            <label>Imię
-              <input value={customer.displayName} onChange={event => setCustomer({ ...customer, displayName: event.currentTarget.value })} />
-            </label>
-            <label>Telefon
-              <input value={customer.phone} onChange={event => setCustomer({ ...customer, phone: event.currentTarget.value })} />
-            </label>
-            <label>Notatka
-              <textarea value={customer.deliveryNote} onChange={event => setCustomer({ ...customer, deliveryNote: event.currentTarget.value })} />
-            </label>
-            <label>Mock payment
-              <select value={paymentMode} onChange={event => setPaymentMode(event.currentTarget.value as "success" | "failed")}>
-                <option value="success">Success</option>
-                <option value="failed">Failed</option>
-              </select>
-            </label>
-            <button className="checkout-button" type="submit" disabled={busy || cart === null || cart.items.length === 0}>
-              <CreditCard aria-hidden="true" />
-              Zapłać i zamów
-            </button>
-          </form>
-          {checkout !== null && (
-            <div className={checkout.paymentStatus === "Success" ? "result success" : "result failed"}>
-              <strong>{checkout.paymentStatus}</strong>
-              <span>{checkout.orderId === null ? checkout.failureReason : `Order ${checkout.orderId}`}</span>
-            </div>
-          )}
+          <CheckoutBox
+            cart={cart}
+            productsById={productsById}
+            customer={customer}
+            paymentMode={paymentMode}
+            checkoutResult={checkoutResult}
+            busy={busy}
+            onCustomer={setCustomer}
+            onPaymentMode={setPaymentMode}
+            onQuantity={setQuantity}
+            onSubmit={submitCheckout}
+          />
         </aside>
       </section>
 
+      <button className="mobile-cart-bar" type="button" onClick={() => setCartOpen(true)}>
+        <ShoppingBag aria-hidden="true" />
+        <span>{totalItems === 0 ? "Koszyk pusty" : `${totalItems} w koszyku`}</span>
+        <strong>{money(cart.totalPrice, cart.currency)}</strong>
+      </button>
+
       {cartOpen && (
-        <div className="drawer-backdrop">
-          <button className="drawer-scrim" type="button" aria-label="Zamknij koszyk" onClick={() => setCartOpen(false)} />
-          <aside className="cart-drawer">
-            <button className="icon-button" type="button" aria-label="Zamknij koszyk" onClick={() => setCartOpen(false)}><X aria-hidden="true" /></button>
-            <h3>Koszyk</h3>
-            <CartSummary cart={cart} productsById={productsById} onQuantity={setQuantity} />
-          </aside>
-        </div>
+        <Drawer title="Koszyk" onClose={() => setCartOpen(false)}>
+          <CheckoutBox
+            cart={cart}
+            productsById={productsById}
+            customer={customer}
+            paymentMode={paymentMode}
+            checkoutResult={checkoutResult}
+            busy={busy}
+            onCustomer={setCustomer}
+            onPaymentMode={setPaymentMode}
+            onQuantity={setQuantity}
+            onSubmit={submitCheckout}
+          />
+        </Drawer>
       )}
 
-      {authOpen && <AuthDialog session={session} onSession={setSession} onClose={() => setAuthOpen(false)} />}
+      {authOpen && (
+        <AuthDialog
+          session={session}
+          onSession={value => queryClient.setQueryData(["storefront", "session"], value)}
+          onClose={() => setAuthOpen(false)}
+        />
+      )}
     </main>
+  );
+}
+
+function ProductCard({
+  product,
+  quantity,
+  onQuantity
+}: {
+  readonly product: MenuProduct;
+  readonly quantity: number;
+  readonly onQuantity: (product: MenuProduct, quantity: number) => void;
+}) {
+  return (
+    <article className="product-card">
+      <div className="product-image">
+        {product.imageUrl === null
+          ? <ChefHat aria-hidden="true" />
+          : <img src={product.imageUrl} alt={product.name} />}
+      </div>
+      <div className="product-body">
+        <div>
+          <h4>{product.name}</h4>
+          <p>{product.description ?? "Gotowe do zamowienia."}</p>
+        </div>
+        <div className="product-footer">
+          <strong>{money(product.price, product.currency)}</strong>
+          {quantity === 0 ? (
+            <button type="button" onClick={() => onQuantity(product, 1)}>
+              <Plus aria-hidden="true" /> Dodaj
+            </button>
+          ) : (
+            <QuantityStepper
+              label={product.name}
+              quantity={quantity}
+              onMinus={() => onQuantity(product, quantity - 1)}
+              onPlus={() => onQuantity(product, quantity + 1)}
+            />
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CheckoutBox({
+  cart,
+  productsById,
+  customer,
+  paymentMode,
+  checkoutResult,
+  busy,
+  onCustomer,
+  onPaymentMode,
+  onQuantity,
+  onSubmit
+}: {
+  readonly cart: CartResponse;
+  readonly productsById: ReadonlyMap<string, MenuProduct>;
+  readonly customer: CustomerForm;
+  readonly paymentMode: "success" | "failed";
+  readonly checkoutResult: null | { readonly status: string; readonly message: string };
+  readonly busy: boolean;
+  readonly onCustomer: (customer: CustomerForm) => void;
+  readonly onPaymentMode: (mode: "success" | "failed") => void;
+  readonly onQuantity: (product: MenuProduct, quantity: number) => void;
+  readonly onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+}) {
+  return (
+    <div className="checkout-box">
+      <div className="panel-title">
+        <h3>Checkout</h3>
+        <span>{cart.items.length} pozycji</span>
+      </div>
+      <CartSummary cart={cart} productsById={productsById} onQuantity={onQuantity} />
+      <form onSubmit={event => { void onSubmit(event); }}>
+        <label>Imie
+          <input value={customer.displayName} onChange={event => onCustomer({ ...customer, displayName: event.currentTarget.value })} />
+        </label>
+        <label>Telefon
+          <input inputMode="tel" value={customer.phone} onChange={event => onCustomer({ ...customer, phone: event.currentTarget.value })} />
+        </label>
+        <label>Notatka
+          <textarea value={customer.deliveryNote} onChange={event => onCustomer({ ...customer, deliveryNote: event.currentTarget.value })} />
+        </label>
+        <label>Mock payment
+          <select value={paymentMode} onChange={event => onPaymentMode(event.currentTarget.value as "success" | "failed")}>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
+          </select>
+        </label>
+        <button className="checkout-button" type="submit" disabled={busy || cart.items.length === 0}>
+          <CreditCard aria-hidden="true" />
+          Zamow za {money(cart.totalPrice, cart.currency)}
+        </button>
+      </form>
+      {checkoutResult !== null && (
+        <div className={checkoutResult.status === "success" ? "result success" : "result failed"}>
+          {checkoutResult.status === "success" && <CheckCircle2 aria-hidden="true" />}
+          <span>{checkoutResult.message}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -332,11 +463,11 @@ function CartSummary({
   productsById,
   onQuantity
 }: {
-  readonly cart: CartResponse | null;
+  readonly cart: CartResponse;
   readonly productsById: ReadonlyMap<string, MenuProduct>;
-  readonly onQuantity: (product: MenuProduct, quantity: number) => Promise<void>;
+  readonly onQuantity: (product: MenuProduct, quantity: number) => void;
 }) {
-  if (cart === null || cart.items.length === 0) {
+  if (cart.items.length === 0) {
     return <p className="empty-cart">Koszyk pusty.</p>;
   }
 
@@ -351,11 +482,13 @@ function CartSummary({
               <span>{item.quantity} x {money(item.unitPrice, item.currency)}</span>
             </div>
             {product !== undefined && (
-              <div className="stepper small">
-                <button type="button" onClick={() => { void onQuantity(product, item.quantity - 1); }}><Minus aria-hidden="true" /></button>
-                <span>{item.quantity}</span>
-                <button type="button" onClick={() => { void onQuantity(product, item.quantity + 1); }}><Plus aria-hidden="true" /></button>
-              </div>
+              <QuantityStepper
+                label={item.name}
+                quantity={item.quantity}
+                small
+                onMinus={() => onQuantity(product, item.quantity - 1)}
+                onPlus={() => onQuantity(product, item.quantity + 1)}
+              />
             )}
           </div>
         );
@@ -364,6 +497,28 @@ function CartSummary({
         <span>Razem</span>
         <strong>{money(cart.totalPrice, cart.currency)}</strong>
       </div>
+    </div>
+  );
+}
+
+function QuantityStepper({
+  label,
+  quantity,
+  small = false,
+  onMinus,
+  onPlus
+}: {
+  readonly label: string;
+  readonly quantity: number;
+  readonly small?: boolean;
+  readonly onMinus: () => void;
+  readonly onPlus: () => void;
+}) {
+  return (
+    <div className={small ? "stepper small" : "stepper"}>
+      <button type="button" aria-label={`Usun ${label}`} onClick={onMinus}><Minus aria-hidden="true" /></button>
+      <span>{quantity}</span>
+      <button type="button" aria-label={`Dodaj ${label}`} onClick={onPlus}><Plus aria-hidden="true" /></button>
     </div>
   );
 }
@@ -384,61 +539,138 @@ function AuthDialog({
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  const authMutation = useMutation({
+    mutationFn: () => mode === "login"
+      ? login(email, password)
+      : register(email, password, displayName, phone),
+    onSuccess: value => {
+      onSession(value);
+      onClose();
+    },
+    onError: value => setError(errorMessage(value, "Logowanie nieudane."))
+  });
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      onSession(null);
+      onClose();
+    }
+  });
+
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    try {
-      const response = await postJson<Session>(mode === "login" ? "/api/storefront/auth/login" : "/api/storefront/auth/register", {
-        email,
-        password,
-        displayName,
-        phone
-      });
-      onSession(response);
-      onClose();
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Logowanie nieudane.");
-    }
-  }
-
-  async function logout() {
-    await postJson<void>("/api/storefront/auth/logout", {});
-    onSession(null);
-    onClose();
+    authMutation.mutate();
   }
 
   return (
-    <div className="drawer-backdrop">
-      <section className="auth-dialog">
-        <button className="icon-button" type="button" aria-label="Zamknij konto" onClick={onClose}><X aria-hidden="true" /></button>
-        <h3>Konto klienta</h3>
-        {session === null ? (
-          <form onSubmit={event => { void submit(event); }}>
-            <div className="segmented">
-              <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>Login</button>
-              <button type="button" className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>Register</button>
-            </div>
-            <label>Email<input type="email" value={email} onChange={event => setEmail(event.currentTarget.value)} /></label>
-            <label>Password<input type="password" value={password} onChange={event => setPassword(event.currentTarget.value)} /></label>
-            {mode === "register" && (
-              <>
-                <label>Imię<input value={displayName} onChange={event => setDisplayName(event.currentTarget.value)} /></label>
-                <label>Telefon<input value={phone} onChange={event => setPhone(event.currentTarget.value)} /></label>
-              </>
-            )}
-            <button className="checkout-button" type="submit"><LogIn aria-hidden="true" /> Zapisz sesję</button>
-            {error !== null && <p className="auth-error">{error}</p>}
-          </form>
-        ) : (
-          <div className="account-box">
-            <strong>{session.displayName ?? session.email}</strong>
-            <span>{session.email}</span>
-            <button type="button" onClick={() => { void logout(); }}>Logout</button>
+    <Drawer title="Konto klienta" onClose={onClose} compact>
+      {session === null ? (
+        <form className="auth-form" onSubmit={submit}>
+          <div className="segmented">
+            <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>Login</button>
+            <button type="button" className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>Register</button>
           </div>
-        )}
-      </section>
+          <label>Email<input type="email" value={email} onChange={event => setEmail(event.currentTarget.value)} /></label>
+          <label>Password<input type="password" value={password} onChange={event => setPassword(event.currentTarget.value)} /></label>
+          {mode === "register" && (
+            <>
+              <label>Imie<input value={displayName} onChange={event => setDisplayName(event.currentTarget.value)} /></label>
+              <label>Telefon<input inputMode="tel" value={phone} onChange={event => setPhone(event.currentTarget.value)} /></label>
+            </>
+          )}
+          <button className="checkout-button" type="submit" disabled={authMutation.isPending}>
+            <LogIn aria-hidden="true" /> Zapisz sesje
+          </button>
+          {error !== null && <p className="auth-error">{error}</p>}
+        </form>
+      ) : (
+        <div className="account-box">
+          <strong>{session.displayName ?? session.email}</strong>
+          <span>{session.email}</span>
+          <button type="button" onClick={() => logoutMutation.mutate()} disabled={logoutMutation.isPending}>Logout</button>
+        </div>
+      )}
+    </Drawer>
+  );
+}
+
+function Drawer({
+  title,
+  compact = false,
+  onClose,
+  children
+}: {
+  readonly title: string;
+  readonly compact?: boolean;
+  readonly onClose: () => void;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div className="drawer-backdrop">
+      <button className="drawer-scrim" type="button" aria-label={`Zamknij ${title}`} onClick={onClose} />
+      <aside className={compact ? "cart-drawer auth-drawer" : "cart-drawer"} role="dialog" aria-modal="true" aria-label={title}>
+        <button className="icon-button" type="button" aria-label={`Zamknij ${title}`} onClick={onClose}><X aria-hidden="true" /></button>
+        {children}
+      </aside>
     </div>
   );
+}
+
+function BrandAvatar({ brand }: { readonly brand: BrandContext }) {
+  if (brand.logoUrl !== null) {
+    return <img className="brand-avatar" src={brand.logoUrl} alt={brand.brandName} />;
+  }
+
+  return <span className="brand-avatar fallback"><ChefHat aria-hidden="true" /></span>;
+}
+
+function ThemeToggle({
+  colorMode,
+  onToggle
+}: {
+  readonly colorMode: ColorMode;
+  readonly onToggle: () => void;
+}) {
+  return (
+    <button className="theme-toggle" type="button" onClick={onToggle} aria-label="Zmien motyw">
+      <SunMoon aria-hidden="true" />
+      <span>{colorMode === "light" ? "Light" : "Dark"}</span>
+    </button>
+  );
+}
+
+function StateMessage({ label }: { readonly label: string }) {
+  return (
+    <main className="state-screen">
+      <Search aria-hidden="true" />
+      <h1>{appMetadata.name}</h1>
+      <p>{label}</p>
+    </main>
+  );
+}
+
+function readColorMode(): ColorMode {
+  return localStorage.getItem("dark-kitchen-storefront-theme") === "dark" ? "dark" : "light";
+}
+
+async function prepareCart(brandId: string) {
+  const stored = readStoredCart(brandId);
+  const created = await createCart(brandId, stored?.cartId ?? null);
+  if (stored === null || stored.items.length === 0) {
+    writeStoredCart(brandId, created);
+    return created;
+  }
+
+  try {
+    const synced = await updateCart(brandId, created.cartId, stored.items);
+    writeStoredCart(brandId, synced);
+    return synced;
+  } catch {
+    localStorage.removeItem(storageKey(brandId));
+    writeStoredCart(brandId, created);
+    return created;
+  }
 }
 
 function applyTheme(theme: Theme) {
@@ -449,50 +681,21 @@ function applyTheme(theme: Theme) {
   root.style.setProperty("--sf-text", theme.textColor);
 }
 
-async function getJson<T>(path: string) {
-  const response = await fetch(apiClient.buildUrl(path), { credentials: "include" });
-  return await readResponse<T>(response);
+function themeStyle(theme: Theme) {
+  return {
+    "--sf-primary": theme.primaryColor,
+    "--sf-accent": theme.accentColor,
+    "--sf-background": theme.backgroundColor,
+    "--sf-text": theme.textColor
+  } as CSSProperties;
 }
 
-async function postJson<T>(path: string, body: unknown) {
-  const response = await fetch(apiClient.buildUrl(path), {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  return await readResponse<T>(response);
-}
-
-async function patchCart(cartId: string, items: readonly CartLine[], brandQuery: string) {
-  const response = await fetch(apiClient.buildUrl(`/api/storefront/carts/${cartId}${brandQuery}`), {
-    method: "PATCH",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items })
-  });
-  return await readResponse<CartResponse>(response);
-}
-
-async function readResponse<T>(response: Response) {
-  if (!response.ok) {
-    throw new Error(`API ${response.status}`);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return await response.json() as T;
+function cartKey(brandId: string) {
+  return ["storefront", "cart", brandId] as const;
 }
 
 function money(amount: number, currency: string) {
   return new Intl.NumberFormat("pl-PL", { style: "currency", currency }).format(amount);
-}
-
-function brandQueryString() {
-  const brandId = new URLSearchParams(window.location.search).get("brandId");
-  return brandId === null ? "" : `?brandId=${encodeURIComponent(brandId)}`;
 }
 
 function storageKey(brandId: string) {

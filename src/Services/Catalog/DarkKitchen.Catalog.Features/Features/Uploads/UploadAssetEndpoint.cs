@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace DarkKitchen.Catalog.Features.Features.Uploads;
 
@@ -6,28 +6,13 @@ public static class UploadAssetEndpoint
 {
     private const long MaxBytes = 2 * 1024 * 1024;
 
-    private static readonly IReadOnlyDictionary<string, string> ExtensionsByContentType =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["image/jpeg"] = ".jpg",
-            ["image/png"] = ".png",
-            ["image/webp"] = ".webp"
-        };
-
-    private static readonly IReadOnlySet<string> AllowedKinds =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "brand-logo",
-            "product-image"
-        };
-
     public static async Task<IResult> HandleAsync(
         string kind,
         HttpContext httpContext,
-        IWebHostEnvironment environment,
+        IOptions<CatalogUploadOptions> uploadOptions,
         CancellationToken ct)
     {
-        if (!AllowedKinds.Contains(kind))
+        if (!UploadedAssetAccess.AllowedKinds.Contains(kind))
         {
             return ApiValidation.Problem(("kind", "Unsupported upload kind."));
         }
@@ -49,19 +34,12 @@ public static class UploadAssetEndpoint
             return ApiValidation.Problem(("file", "File must be 2 MB or smaller."));
         }
 
-        if (!ExtensionsByContentType.TryGetValue(file.ContentType, out var extension))
+        if (!UploadedAssetAccess.ExtensionsByContentType.TryGetValue(file.ContentType, out var extension))
         {
             return ApiValidation.Problem(("file", "Only jpg, png and webp images are supported."));
         }
 
-        var webRoot = environment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(webRoot))
-        {
-            webRoot = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
-
-        var relativeDirectory = Path.Combine("uploads", kind);
-        var targetDirectory = Path.Combine(webRoot, relativeDirectory);
+        var targetDirectory = Path.Combine(uploadOptions.Value.RootPath, kind);
         Directory.CreateDirectory(targetDirectory);
 
         var fileName = $"{Guid.NewGuid():N}{extension}";

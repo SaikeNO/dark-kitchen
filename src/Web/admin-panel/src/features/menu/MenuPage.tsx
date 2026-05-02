@@ -224,6 +224,7 @@ export function MenuProductFormPage({
   );
   const firstCategoryId = brandCategories.find(category => category.isActive)?.id ?? brandCategories[0]?.id ?? "";
   const [form, setForm] = useState<ProductFormState>(() => productToForm(product, firstCategoryId));
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -286,6 +287,9 @@ export function MenuProductFormPage({
       return;
     }
 
+    clearImagePreview();
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
     try {
       const uploaded = await uploadProductImage(file);
       setForm(current => ({ ...current, imageUrl: uploaded.url }));
@@ -293,6 +297,16 @@ export function MenuProductFormPage({
     } catch (error) {
       toast.error(errorMessage(error));
     }
+  }
+
+  function clearImagePreview() {
+    setImagePreviewUrl(current => {
+      if (current !== null) {
+        URL.revokeObjectURL(current);
+      }
+
+      return null;
+    });
   }
 
   return (
@@ -344,7 +358,7 @@ export function MenuProductFormPage({
 
           {form.imageUrl.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
-              <img src={form.imageUrl} alt="" className="h-44 w-full object-cover" />
+              <img src={imagePreviewUrl ?? form.imageUrl} alt="" className="h-44 w-full object-cover" />
             </div>
           )}
 

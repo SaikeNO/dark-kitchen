@@ -17,6 +17,10 @@ public sealed class UploadAssetEndpointTests(AspireAppFixture fixture) : Catalog
         var uploaded = await response.ReadJsonAsync<UploadResponse>();
 
         Assert.Contains("/uploads/brand-logo/", uploaded.Url, StringComparison.Ordinal);
+
+        using var imageResponse = await catalog.HttpClient.GetAsync(new Uri(uploaded.Url).PathAndQuery);
+        await imageResponse.AssertSuccessAsync();
+        Assert.Equal("image/png", imageResponse.Content.Headers.ContentType?.MediaType);
     }
 
     public sealed record UploadResponse(string Url);

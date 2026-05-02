@@ -1,4 +1,5 @@
 using DarkKitchen.Catalog.Features.Features;
+using DarkKitchen.Catalog.Features.Features.Uploads;
 using DarkKitchen.Catalog.Infrastructure;
 using DarkKitchen.Catalog.Infrastructure.Persistence;
 using DarkKitchen.Contracts.Events;
@@ -23,6 +24,14 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddCatalogInfrastructure(builder.Configuration);
+var uploadRootPath = builder.Configuration["Catalog:Uploads:RootPath"];
+if (string.IsNullOrWhiteSpace(uploadRootPath))
+{
+    uploadRootPath = CatalogUploadOptions.DefaultRootPath();
+}
+
+Directory.CreateDirectory(uploadRootPath);
+builder.Services.Configure<CatalogUploadOptions>(options => options.RootPath = uploadRootPath);
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -31,7 +40,6 @@ await app.Services.InitializeCatalogDatabaseAsync();
 
 app.UseExceptionHandler();
 app.UseCors("admin-panel");
-app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();

@@ -90,6 +90,25 @@ test.describe("Admin Panel", () => {
     await expect(stationCard.getByText("Nieaktywne")).toBeVisible();
   });
 
+  test("uploads brand logo without restarting the app", async ({ page }) => {
+    await loginAsManager(page);
+    await page.getByRole("link", { name: "Marki" }).click();
+    await cardByText(page, "Burger Ghost").getByRole("button", { name: "Edytuj" }).click();
+
+    const uploadResponse = page.waitForResponse(response =>
+      response.url().includes("/api/admin/uploads/brand-logo") && response.status() === 201);
+    await page.getByLabel("Wgraj logo").setInputFiles({
+      name: "brand-logo.png",
+      mimeType: "image/png",
+      buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=", "base64")
+    });
+
+    await uploadResponse;
+    await expect(page.getByText("Wgrano logo.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Edycja marki" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Zapisz" })).toBeEnabled();
+  });
+
   test("creates menu item, recipe, and toggles product status", async ({ page }) => {
     await loginAsManager(page);
 

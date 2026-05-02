@@ -15,7 +15,7 @@ const apps = [
   },
   {
     name: "storefront",
-    url: "http://127.0.0.1:5174",
+    url: "http://127.0.0.1:5174/brands/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001",
     heading: "Burger Ghost",
     context: "White-label Storefront"
   },
