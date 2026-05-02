@@ -29,7 +29,7 @@ public sealed class CreateProductEndpointTests(AspireAppFixture fixture) : Catal
         var brandB = await catalog.CreateBrandAsync($"Product Brand B {suffix}");
         var categoryB = await catalog.CreateCategoryAsync(brandB.Id, $"Product Category B {suffix}");
 
-        using var response = await catalog.PostProductAsync(new ProductRequest(brandA.Id, categoryB.Id, "Invalid Product", null, 10, "PLN"));
+        using var response = await catalog.PostProductAsync(new ProductRequest(brandA.Id, categoryB.Id, "Invalid Product", null, null, 10, "PLN"));
         var problem = await response.ReadValidationProblemAsync();
 
         Assert.Contains("categoryId", problem.Errors.Keys);
@@ -40,7 +40,7 @@ public sealed class CreateProductEndpointTests(AspireAppFixture fixture) : Catal
     {
         using var catalog = await CreateOperatorClientAsync();
 
-        using var response = await catalog.PostProductAsync(new ProductRequest(Guid.NewGuid(), Guid.NewGuid(), "Forbidden Product", null, 10, "PLN"));
+        using var response = await catalog.PostProductAsync(new ProductRequest(Guid.NewGuid(), Guid.NewGuid(), "Forbidden Product", null, null, 10, "PLN"));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }

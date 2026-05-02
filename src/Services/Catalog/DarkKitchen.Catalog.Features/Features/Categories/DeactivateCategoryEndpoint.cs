@@ -8,6 +8,7 @@ public static class DeactivateCategoryEndpoint
     public static async Task<IResult> HandleAsync(
         Guid categoryId,
         IDbContextOutbox<CatalogDbContext> outbox,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var category = await outbox.DbContext.Categories.FirstOrDefaultAsync(entity => entity.Id == categoryId, ct);
@@ -17,6 +18,7 @@ public static class DeactivateCategoryEndpoint
         }
 
         category.Deactivate(DateTimeOffset.UtcNow);
+        await outbox.PublishAsync(CatalogEventFactory.CategoryChanged(category, httpContext));
         await outbox.SaveChangesAndFlushMessagesAsync(ct);
 
         return Results.Ok(new Response(category.Id, category.BrandId, category.Name, category.SortOrder, category.IsActive));

@@ -8,6 +8,7 @@ using DarkKitchen.Catalog.Features.Features.PublicMenu;
 using DarkKitchen.Catalog.Features.Features.Recipes;
 using DarkKitchen.Catalog.Features.Features.ServiceInfo;
 using DarkKitchen.Catalog.Features.Features.Stations;
+using DarkKitchen.Catalog.Features.Features.Uploads;
 
 namespace DarkKitchen.Catalog.Features.Features;
 
@@ -24,6 +25,7 @@ public static class CatalogApi
         app.MapIngredientEndpoints();
         app.MapStationEndpoints();
         app.MapProductStationRouteEndpoints();
+        app.MapUploadEndpoints();
         app.MapPublicMenuEndpoints();
 
         return app;

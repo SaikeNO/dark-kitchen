@@ -6,6 +6,8 @@ public sealed class CatalogApiClient(HttpClient httpClient) : IDisposable
 {
     private readonly HttpClient _httpClient = httpClient;
 
+    public HttpClient HttpClient => _httpClient;
+
     public Task<HttpResponseMessage> PostLoginAsync(LoginRequest request)
     {
         return _httpClient.PostAsJsonAsync("/api/admin/auth/login", request, HttpTestExtensions.JsonOptions);
@@ -48,7 +50,18 @@ public sealed class CatalogApiClient(HttpClient httpClient) : IDisposable
 
     public async Task<BrandResponse> CreateBrandAsync(string name, bool isActive = true)
     {
-        using var response = await PostBrandAsync(new BrandRequest(name, "Integration test brand", null, isActive));
+        using var response = await PostBrandAsync(new BrandRequest(
+            name,
+            "Integration test brand",
+            null,
+            [],
+            $"{name} hero",
+            "Integration hero",
+            "#dc2626",
+            "#ca8a04",
+            "#fef2f2",
+            "#450a0a",
+            isActive));
         await response.AssertSuccessAsync();
         return await response.ReadJsonAsync<BrandResponse>();
     }
@@ -225,7 +238,7 @@ public sealed class CatalogApiClient(HttpClient httpClient) : IDisposable
         string name,
         decimal price = 31.50m)
     {
-        using var response = await PostProductAsync(new ProductRequest(brandId, categoryId, name, "Integration product", price, "PLN"));
+        using var response = await PostProductAsync(new ProductRequest(brandId, categoryId, name, "Integration product", null, price, "PLN"));
         await response.AssertSuccessAsync();
         return await response.ReadJsonAsync<ProductResponse>();
     }

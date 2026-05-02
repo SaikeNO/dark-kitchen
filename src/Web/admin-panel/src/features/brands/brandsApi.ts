@@ -1,4 +1,4 @@
-import { getJson, postJson, putJson } from "../../api/http";
+import { getJson, postForm, postJson, putJson } from "../../api/http";
 import type { Brand, BrandPayload } from "./brandTypes";
 
 export function listBrands(signal?: AbortSignal) {
@@ -13,4 +13,10 @@ export function saveBrand(brandId: string | null, payload: BrandPayload) {
 
 export function deactivateBrand(brandId: string) {
   return postJson<unknown>(`/api/admin/brands/${brandId}/deactivate`);
+}
+
+export async function uploadBrandLogo(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return await postForm<{ readonly url: string }>("/api/admin/uploads/brand-logo", form);
 }

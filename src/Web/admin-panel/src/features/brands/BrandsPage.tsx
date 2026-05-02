@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, CircleCheck, Pencil, Power, Save, X } from "lucide-react";
+import { Building2, CircleCheck, ImageUp, Pencil, Power, Save, X } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { errorMessage } from "../../api/http";
@@ -10,10 +10,22 @@ import { Checkbox, Field, Textarea, TextInput } from "../../shared/ui/Fields";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { Panel } from "../../shared/ui/Panel";
 import { StatusBadge } from "../../shared/ui/StatusBadge";
-import { deactivateBrand, saveBrand } from "./brandsApi";
+import { deactivateBrand, saveBrand, uploadBrandLogo } from "./brandsApi";
 import type { Brand } from "./brandTypes";
 
-const emptyForm = { name: "", description: "", logoUrl: "", isActive: true };
+const emptyForm = {
+  name: "",
+  description: "",
+  logoUrl: "",
+  domainsText: "",
+  heroTitle: "",
+  heroSubtitle: "",
+  primaryColor: "#dc2626",
+  accentColor: "#ca8a04",
+  backgroundColor: "#fef2f2",
+  textColor: "#450a0a",
+  isActive: true
+};
 
 export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; readonly canWrite: boolean }) {
   const queryClient = useQueryClient();
@@ -41,6 +53,13 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
       name: brand.name,
       description: brand.description ?? "",
       logoUrl: brand.logoUrl ?? "",
+      domainsText: brand.domains.join("\n"),
+      heroTitle: brand.heroTitle ?? "",
+      heroSubtitle: brand.heroSubtitle ?? "",
+      primaryColor: brand.primaryColor,
+      accentColor: brand.accentColor,
+      backgroundColor: brand.backgroundColor,
+      textColor: brand.textColor,
       isActive: brand.isActive
     });
   }
@@ -52,7 +71,7 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
       return;
     }
 
-    mutation.mutate(() => saveBrand(editingId, form));
+    mutation.mutate(() => saveBrand(editingId, toPayload(form)));
   }
 
   function changeStatus(brand: Brand, isActive: boolean) {
@@ -66,9 +85,30 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
         name: brand.name,
         description: brand.description ?? "",
         logoUrl: brand.logoUrl ?? "",
+        domains: brand.domains,
+        heroTitle: brand.heroTitle ?? "",
+        heroSubtitle: brand.heroSubtitle ?? "",
+        primaryColor: brand.primaryColor,
+        accentColor: brand.accentColor,
+        backgroundColor: brand.backgroundColor,
+        textColor: brand.textColor,
         isActive: true
       })
       : deactivateBrand(brand.id));
+  }
+
+  async function uploadLogo(file: File | undefined) {
+    if (file === undefined) {
+      return;
+    }
+
+    try {
+      const uploaded = await uploadBrandLogo(file);
+      setForm(current => ({ ...current, logoUrl: uploaded.url }));
+      toast.success("Wgrano logo.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
   }
 
   return (
@@ -86,6 +126,37 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
             <Field label="Logo URL">
               <TextInput value={form.logoUrl} disabled={!canWrite} onChange={event => setForm({ ...form, logoUrl: event.currentTarget.value })} />
             </Field>
+            <Field label="Wgraj logo">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={!canWrite}
+                onChange={event => { void uploadLogo(event.currentTarget.files?.[0]); }}
+              />
+            </Field>
+            {form.logoUrl.length > 0 && (
+              <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="grid size-16 place-items-center overflow-hidden rounded-md bg-white dark:bg-zinc-950">
+                  <img src={form.logoUrl} alt="" className="max-h-full max-w-full object-contain" />
+                </div>
+                <span className="min-w-0 truncate text-sm font-semibold text-zinc-600 dark:text-zinc-400">{form.logoUrl}</span>
+              </div>
+            )}
+            <Field label="Domeny">
+              <Textarea value={form.domainsText} disabled={!canWrite} placeholder="burgerghost.local" onChange={event => setForm({ ...form, domainsText: event.currentTarget.value })} />
+            </Field>
+            <Field label="Hero title">
+              <TextInput value={form.heroTitle} disabled={!canWrite} onChange={event => setForm({ ...form, heroTitle: event.currentTarget.value })} />
+            </Field>
+            <Field label="Hero subtitle">
+              <Textarea value={form.heroSubtitle} disabled={!canWrite} onChange={event => setForm({ ...form, heroSubtitle: event.currentTarget.value })} />
+            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ColorField label="Primary" value={form.primaryColor} disabled={!canWrite} onChange={value => setForm({ ...form, primaryColor: value })} />
+              <ColorField label="Accent" value={form.accentColor} disabled={!canWrite} onChange={value => setForm({ ...form, accentColor: value })} />
+              <ColorField label="Background" value={form.backgroundColor} disabled={!canWrite} onChange={value => setForm({ ...form, backgroundColor: value })} />
+              <ColorField label="Text" value={form.textColor} disabled={!canWrite} onChange={value => setForm({ ...form, textColor: value })} />
+            </div>
             <Checkbox label="Aktywna" checked={form.isActive} disabled={!canWrite} onChange={event => setForm({ ...form, isActive: event.currentTarget.checked })} />
             <div className="grid gap-2 sm:grid-cols-2">
               <Button type="submit" variant="primary" icon={Save} disabled={!canWrite || mutation.isPending}>Zapisz</Button>
@@ -103,6 +174,7 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
                 <article key={brand.id} className="grid gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
+                      {brand.logoUrl === null ? <ImageUp aria-hidden="true" className="size-4 text-zinc-400" /> : <img src={brand.logoUrl} alt="" className="size-7 rounded object-cover" />}
                       <h3 className="truncate font-bold text-zinc-950 dark:text-zinc-50">{brand.name}</h3>
                       <StatusBadge isActive={brand.isActive} />
                     </div>
@@ -137,4 +209,44 @@ export function BrandsPage({ brands, canWrite }: { readonly brands: Brand[]; rea
       </div>
     </div>
   );
+}
+
+function ColorField({
+  label,
+  value,
+  disabled,
+  onChange
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly disabled: boolean;
+  readonly onChange: (value: string) => void;
+}) {
+  return (
+    <Field label={label}>
+      <div className="grid grid-cols-[3rem_1fr] gap-2">
+        <input type="color" value={value} disabled={disabled} onChange={event => onChange(event.currentTarget.value)} className="h-10 w-full rounded-md border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-950" />
+        <TextInput value={value} disabled={disabled} onChange={event => onChange(event.currentTarget.value)} />
+      </div>
+    </Field>
+  );
+}
+
+function toPayload(form: typeof emptyForm) {
+  return {
+    name: form.name,
+    description: form.description,
+    logoUrl: form.logoUrl,
+    domains: form.domainsText
+      .split(/\r?\n|,/)
+      .map(domain => domain.trim())
+      .filter(domain => domain.length > 0),
+    heroTitle: form.heroTitle,
+    heroSubtitle: form.heroSubtitle,
+    primaryColor: form.primaryColor,
+    accentColor: form.accentColor,
+    backgroundColor: form.backgroundColor,
+    textColor: form.textColor,
+    isActive: form.isActive
+  };
 }

@@ -120,6 +120,7 @@ public static class CatalogDatabaseInitializer
             categoryId: category.Id,
             name: "Classic Smash",
             description: "Demo burger for the MVP catalog.",
+            imageUrl: null,
             price: 32.90m,
             currency: "PLN",
             now: now,

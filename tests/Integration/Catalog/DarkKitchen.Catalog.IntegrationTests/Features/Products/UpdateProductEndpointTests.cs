@@ -16,6 +16,7 @@ public sealed class UpdateProductEndpointTests(AspireAppFixture fixture) : Catal
                 scenario.Category.Id,
                 $"Updated Product {NewSuffix()}",
                 "Updated description",
+                "https://example.test/product.webp",
                 42.90m,
                 "PLN"));
 
@@ -34,7 +35,7 @@ public sealed class UpdateProductEndpointTests(AspireAppFixture fixture) : Catal
 
         using var response = await catalog.PutProductAsync(
             Guid.NewGuid(),
-            new ProductRequest(brand.Id, category.Id, "Missing Product", null, 12, "PLN"));
+            new ProductRequest(brand.Id, category.Id, "Missing Product", null, null, 12, "PLN"));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

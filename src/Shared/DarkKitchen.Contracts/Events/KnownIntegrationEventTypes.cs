@@ -12,6 +12,8 @@ public static class KnownIntegrationEventTypes
     public const string OrderReadyForPickup = "order.ready_for_pickup";
     public const string MenuItemChanged = "menu.item_changed";
     public const string ProductPriceChanged = "product.price_changed";
+    public const string BrandChanged = "brand.changed";
+    public const string CategoryChanged = "category.changed";
     public const string RecipeChanged = "recipe.changed";
     public const string StationChanged = "station.changed";
     public const string ProductStationRoutingChanged = "product.station_routing_changed";
@@ -28,6 +30,8 @@ public static class KnownIntegrationEventTypes
         OrderReadyForPickup,
         MenuItemChanged,
         ProductPriceChanged,
+        BrandChanged,
+        CategoryChanged,
         RecipeChanged,
         StationChanged,
         ProductStationRoutingChanged

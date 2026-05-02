@@ -47,6 +47,7 @@ public static class UpdateProductEndpoint
             request.CategoryId,
             request.Name.Trim(),
             ApiValidation.TrimOptional(request.Description),
+            ApiValidation.TrimOptional(request.ImageUrl),
             request.Price,
             normalizedCurrency,
             DateTimeOffset.UtcNow);
@@ -67,6 +68,7 @@ public static class UpdateProductEndpoint
         Guid CategoryId,
         string Name,
         string? Description,
+        string? ImageUrl,
         decimal Price,
         string Currency);
 
@@ -76,6 +78,7 @@ public static class UpdateProductEndpoint
         Guid CategoryId,
         string Name,
         string? Description,
+        string? ImageUrl,
         decimal Price,
         string Currency,
         bool IsActive,
@@ -91,6 +94,7 @@ public static class UpdateProductEndpoint
                 product.CategoryId,
                 product.Name,
                 product.Description,
+                product.ImageUrl,
                 product.Price,
                 product.Currency,
                 product.IsActive,

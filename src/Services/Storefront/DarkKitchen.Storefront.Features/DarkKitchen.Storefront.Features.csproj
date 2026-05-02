@@ -5,9 +5,12 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DarkKitchen.Storefront.Domain\DarkKitchen.Storefront.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\DarkKitchen.Contracts\DarkKitchen.Contracts.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 </Project>

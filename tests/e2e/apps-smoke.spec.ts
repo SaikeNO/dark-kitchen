@@ -16,8 +16,8 @@ const apps = [
   {
     name: "storefront",
     url: "http://127.0.0.1:5174",
-    heading: "Storefront",
-    context: "Direct Sales"
+    heading: "Burger Ghost",
+    context: "White-label Storefront"
   },
   {
     name: "kitchen-app",
@@ -58,6 +58,12 @@ for (const app of apps) {
     await expect(page.getByText("Dark Kitchen", { exact: true })).toBeVisible();
     if (app.name === "admin-panel") {
       await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+      expect(browserErrors).toEqual([]);
+      return;
+    }
+
+    if (app.name === "storefront") {
+      await expect(page.getByText(app.context, { exact: true })).toBeVisible();
       expect(browserErrors).toEqual([]);
       return;
     }

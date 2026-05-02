@@ -12,6 +12,7 @@ export interface Product {
   readonly categoryId: string;
   readonly name: string;
   readonly description: string | null;
+  readonly imageUrl: string | null;
   readonly price: number;
   readonly currency: string;
   readonly isActive: boolean;
@@ -32,6 +33,7 @@ export interface ProductPayload {
   readonly categoryId: string;
   readonly name: string;
   readonly description: string;
+  readonly imageUrl: string;
   readonly price: number;
   readonly currency: string;
 }

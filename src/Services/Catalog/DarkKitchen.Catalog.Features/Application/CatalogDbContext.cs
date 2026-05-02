@@ -46,6 +46,13 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
             entity.Property(brand => brand.Name).HasMaxLength(120).IsRequired();
             entity.Property(brand => brand.Description).HasMaxLength(500);
             entity.Property(brand => brand.LogoUrl).HasMaxLength(500);
+            entity.Property(brand => brand.Domains).HasColumnType("text[]");
+            entity.Property(brand => brand.HeroTitle).HasMaxLength(160);
+            entity.Property(brand => brand.HeroSubtitle).HasMaxLength(500);
+            entity.Property(brand => brand.PrimaryColor).HasMaxLength(16).IsRequired();
+            entity.Property(brand => brand.AccentColor).HasMaxLength(16).IsRequired();
+            entity.Property(brand => brand.BackgroundColor).HasMaxLength(16).IsRequired();
+            entity.Property(brand => brand.TextColor).HasMaxLength(16).IsRequired();
         });
 
         builder.Entity<Category>(entity =>
@@ -66,6 +73,7 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
             entity.HasKey(product => product.Id);
             entity.Property(product => product.Name).HasMaxLength(160).IsRequired();
             entity.Property(product => product.Description).HasMaxLength(1000);
+            entity.Property(product => product.ImageUrl).HasMaxLength(500);
             entity.Property(product => product.Price).HasPrecision(10, 2);
             entity.Property(product => product.Currency).HasMaxLength(3).IsRequired();
             entity.HasOne(product => product.Brand)

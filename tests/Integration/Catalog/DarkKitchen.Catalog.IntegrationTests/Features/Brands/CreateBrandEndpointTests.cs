@@ -21,7 +21,7 @@ public sealed class CreateBrandEndpointTests(AspireAppFixture fixture) : Catalog
     {
         using var catalog = await CreateOperatorClientAsync();
 
-        using var response = await catalog.PostBrandAsync(new BrandRequest($"Forbidden Brand {NewSuffix()}", null, null, true));
+        using var response = await catalog.PostBrandAsync(NewBrandRequest($"Forbidden Brand {NewSuffix()}"));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -31,9 +31,14 @@ public sealed class CreateBrandEndpointTests(AspireAppFixture fixture) : Catalog
     {
         using var catalog = await CreateManagerClientAsync();
 
-        using var response = await catalog.PostBrandAsync(new BrandRequest(" ", null, null, true));
+        using var response = await catalog.PostBrandAsync(NewBrandRequest(" "));
         var problem = await response.ReadValidationProblemAsync();
 
         Assert.Contains("name", problem.Errors.Keys);
+    }
+
+    private static BrandRequest NewBrandRequest(string name)
+    {
+        return new BrandRequest(name, null, null, [], null, null, null, null, null, null, true);
     }
 }

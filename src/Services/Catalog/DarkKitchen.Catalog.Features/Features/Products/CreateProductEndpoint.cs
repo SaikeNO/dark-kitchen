@@ -30,6 +30,7 @@ public static class CreateProductEndpoint
             request.CategoryId,
             request.Name.Trim(),
             ApiValidation.TrimOptional(request.Description),
+            ApiValidation.TrimOptional(request.ImageUrl),
             request.Price,
             ApiValidation.NormalizeCurrency(request.Currency),
             DateTimeOffset.UtcNow);
@@ -46,6 +47,7 @@ public static class CreateProductEndpoint
         Guid CategoryId,
         string Name,
         string? Description,
+        string? ImageUrl,
         decimal Price,
         string Currency);
 
@@ -55,6 +57,7 @@ public static class CreateProductEndpoint
         Guid CategoryId,
         string Name,
         string? Description,
+        string? ImageUrl,
         decimal Price,
         string Currency,
         bool IsActive,
@@ -70,6 +73,7 @@ public static class CreateProductEndpoint
                 product.CategoryId,
                 product.Name,
                 product.Description,
+                product.ImageUrl,
                 product.Price,
                 product.Currency,
                 product.IsActive,

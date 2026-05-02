@@ -5,6 +5,39 @@ namespace DarkKitchen.Catalog.Features.Application;
 
 public static class CatalogEventFactory
 {
+    public static IntegrationEventEnvelope<BrandChanged> BrandChanged(Brand brand, HttpContext httpContext)
+    {
+        return CreateEnvelope(
+            brand.Id,
+            new BrandChanged(
+                brand.Id,
+                brand.Name,
+                brand.Description,
+                brand.LogoUrl,
+                brand.Domains,
+                brand.HeroTitle,
+                brand.HeroSubtitle,
+                brand.PrimaryColor,
+                brand.AccentColor,
+                brand.BackgroundColor,
+                brand.TextColor,
+                brand.IsActive),
+            httpContext);
+    }
+
+    public static IntegrationEventEnvelope<CategoryChanged> CategoryChanged(Category category, HttpContext httpContext)
+    {
+        return CreateEnvelope(
+            category.BrandId,
+            new CategoryChanged(
+                category.Id,
+                category.BrandId,
+                category.Name,
+                category.SortOrder,
+                category.IsActive),
+            httpContext);
+    }
+
     public static IntegrationEventEnvelope<MenuItemChanged> MenuItemChanged(Product product, HttpContext httpContext)
     {
         return CreateEnvelope(
@@ -15,6 +48,7 @@ public static class CatalogEventFactory
                 product.CategoryId,
                 product.Name,
                 product.Description,
+                product.ImageUrl,
                 product.Price,
                 product.Currency,
                 product.IsActive),

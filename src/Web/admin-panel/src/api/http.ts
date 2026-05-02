@@ -57,6 +57,11 @@ export async function putJson<TResponse>(url: string, data: unknown) {
   return response.data;
 }
 
+export async function postForm<TResponse>(url: string, data: FormData) {
+  const response = await http.post<TResponse>(url, data);
+  return response.data;
+}
+
 export function errorMessage(error: unknown, fallback = "Operacja nie powiodła się.") {
   return error instanceof Error ? error.message : fallback;
 }

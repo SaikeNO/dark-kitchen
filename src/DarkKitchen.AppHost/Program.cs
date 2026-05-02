@@ -63,9 +63,12 @@ var storefrontApi = builder.AddProject<Projects.DarkKitchen_Storefront_Api>("sto
     .WithReference(storefrontDb)
     .WithReference(rabbitMq)
     .WithReference(redis)
+    .WithReference(orderManagementApi)
+    .WithEnvironment("OrderManagement__BaseUrl", orderManagementApi.GetEndpoint("http"))
     .WaitFor(storefrontDb)
     .WaitFor(rabbitMq)
-    .WaitFor(redis);
+    .WaitFor(redis)
+    .WaitFor(orderManagementApi);
 
 var kdsApi = builder.AddProject<Projects.DarkKitchen_Kds_Api>("kds-api")
     .WithReference(kdsDb)

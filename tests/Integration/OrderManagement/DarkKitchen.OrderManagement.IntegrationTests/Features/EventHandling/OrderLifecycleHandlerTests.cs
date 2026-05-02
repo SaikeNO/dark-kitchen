@@ -92,7 +92,7 @@ public sealed class OrderLifecycleHandlerTests(AspireAppFixture fixture) : Order
         var productId = Guid.NewGuid();
 
         await MenuItemChangedHandler.UpsertAsync(
-            Envelope(new MenuItemChanged(productId, brandId, Guid.NewGuid(), "Burger", null, 10m, "PLN", true)),
+            Envelope(new MenuItemChanged(productId, brandId, Guid.NewGuid(), "Burger", null, null, 10m, "PLN", true)),
             db,
             CancellationToken.None);
         await ProductPriceChangedHandler.ApplyAsync(

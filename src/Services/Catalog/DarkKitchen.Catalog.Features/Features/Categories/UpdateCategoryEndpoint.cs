@@ -10,6 +10,7 @@ public static class UpdateCategoryEndpoint
         Guid categoryId,
         Request request,
         IDbContextOutbox<CatalogDbContext> outbox,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var db = outbox.DbContext;
@@ -31,6 +32,7 @@ public static class UpdateCategoryEndpoint
             request.SortOrder,
             request.IsActive,
             DateTimeOffset.UtcNow);
+        await outbox.PublishAsync(CatalogEventFactory.CategoryChanged(category, httpContext));
         await outbox.SaveChangesAndFlushMessagesAsync(ct);
 
         return Results.Ok(Response.FromCategory(category));

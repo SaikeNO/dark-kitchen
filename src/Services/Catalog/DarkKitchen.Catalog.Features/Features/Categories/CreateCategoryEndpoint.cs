@@ -8,6 +8,7 @@ public static class CreateCategoryEndpoint
     public static async Task<IResult> HandleAsync(
         Request request,
         IDbContextOutbox<CatalogDbContext> outbox,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var validation = await ValidateAsync(request, outbox.DbContext, ct);
@@ -24,6 +25,7 @@ public static class CreateCategoryEndpoint
             DateTimeOffset.UtcNow);
 
         outbox.DbContext.Categories.Add(category);
+        await outbox.PublishAsync(CatalogEventFactory.CategoryChanged(category, httpContext));
         await outbox.SaveChangesAndFlushMessagesAsync(ct);
 
         return Results.Created($"/api/admin/categories/{category.Id}", Response.FromCategory(category));

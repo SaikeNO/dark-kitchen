@@ -8,6 +8,7 @@ public static class DeactivateBrandEndpoint
     public static async Task<IResult> HandleAsync(
         Guid brandId,
         IDbContextOutbox<CatalogDbContext> outbox,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var brand = await outbox.DbContext.Brands.FirstOrDefaultAsync(entity => entity.Id == brandId, ct);
@@ -17,9 +18,10 @@ public static class DeactivateBrandEndpoint
         }
 
         brand.Deactivate(DateTimeOffset.UtcNow);
+        await outbox.PublishAsync(CatalogEventFactory.BrandChanged(brand, httpContext));
         await outbox.SaveChangesAndFlushMessagesAsync(ct);
 
-        return Results.Ok(new Response(brand.Id, brand.Name, brand.Description, brand.LogoUrl, brand.IsActive));
+        return Results.Ok(Response.FromBrand(brand));
     }
 
     public sealed record Response(
@@ -27,5 +29,30 @@ public static class DeactivateBrandEndpoint
         string Name,
         string? Description,
         string? LogoUrl,
-        bool IsActive);
+        IReadOnlyList<string> Domains,
+        string? HeroTitle,
+        string? HeroSubtitle,
+        string PrimaryColor,
+        string AccentColor,
+        string BackgroundColor,
+        string TextColor,
+        bool IsActive)
+    {
+        public static Response FromBrand(Brand brand)
+        {
+            return new Response(
+                brand.Id,
+                brand.Name,
+                brand.Description,
+                brand.LogoUrl,
+                brand.Domains,
+                brand.HeroTitle,
+                brand.HeroSubtitle,
+                brand.PrimaryColor,
+                brand.AccentColor,
+                brand.BackgroundColor,
+                brand.TextColor,
+                brand.IsActive);
+        }
+    }
 }

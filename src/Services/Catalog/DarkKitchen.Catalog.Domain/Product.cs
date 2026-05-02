@@ -13,6 +13,7 @@ public sealed class Product
     public Category? Category { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public string? ImageUrl { get; private set; }
     public decimal Price { get; private set; }
     public string Currency { get; private set; } = "PLN";
     public bool IsActive { get; private set; }
@@ -27,6 +28,7 @@ public sealed class Product
         Guid categoryId,
         string name,
         string? description,
+        string? imageUrl,
         decimal price,
         string currency,
         DateTimeOffset now,
@@ -40,6 +42,7 @@ public sealed class Product
             CategoryId = categoryId,
             Name = name,
             Description = description,
+            ImageUrl = imageUrl,
             Price = price,
             Currency = currency,
             IsActive = isActive,
@@ -53,6 +56,7 @@ public sealed class Product
         Guid categoryId,
         string name,
         string? description,
+        string? imageUrl,
         decimal price,
         string currency,
         DateTimeOffset now)
@@ -61,6 +65,7 @@ public sealed class Product
         CategoryId = categoryId;
         Name = name;
         Description = description;
+        ImageUrl = imageUrl;
         Price = price;
         Currency = currency;
         UpdatedAt = now;

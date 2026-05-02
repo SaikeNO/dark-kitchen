@@ -143,6 +143,14 @@ public static class IntegrationEventBusExtensions
             .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.ProductPriceChanged))
             .UseDurableOutbox();
 
+        options.PublishMessage<IntegrationEventEnvelope<BrandChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.BrandChanged))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<CategoryChanged>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.CategoryChanged))
+            .UseDurableOutbox();
+
         options.PublishMessage<IntegrationEventEnvelope<RecipeChanged>>()
             .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.RecipeChanged))
             .UseDurableOutbox();

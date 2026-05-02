@@ -31,6 +31,7 @@ await app.Services.InitializeCatalogDatabaseAsync();
 
 app.UseExceptionHandler();
 app.UseCors("admin-panel");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();

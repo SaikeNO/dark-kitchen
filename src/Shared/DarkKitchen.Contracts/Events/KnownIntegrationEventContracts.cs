@@ -36,6 +36,12 @@ public static class KnownIntegrationEventContracts
     public static readonly IntegrationEventContract ProductPriceChanged =
         Create<ProductPriceChanged>(KnownIntegrationEventTypes.ProductPriceChanged);
 
+    public static readonly IntegrationEventContract BrandChanged =
+        Create<BrandChanged>(KnownIntegrationEventTypes.BrandChanged);
+
+    public static readonly IntegrationEventContract CategoryChanged =
+        Create<CategoryChanged>(KnownIntegrationEventTypes.CategoryChanged);
+
     public static readonly IntegrationEventContract RecipeChanged =
         Create<RecipeChanged>(KnownIntegrationEventTypes.RecipeChanged);
 
@@ -57,6 +63,8 @@ public static class KnownIntegrationEventContracts
         OrderReadyForPickup,
         MenuItemChanged,
         ProductPriceChanged,
+        BrandChanged,
+        CategoryChanged,
         RecipeChanged,
         StationChanged,
         ProductStationRoutingChanged

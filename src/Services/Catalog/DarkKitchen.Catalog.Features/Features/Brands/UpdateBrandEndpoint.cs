@@ -9,6 +9,7 @@ public static class UpdateBrandEndpoint
         Guid brandId,
         Request request,
         IDbContextOutbox<CatalogDbContext> outbox,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var validation = Validate(request);
@@ -28,7 +29,15 @@ public static class UpdateBrandEndpoint
             ApiValidation.TrimOptional(request.Description),
             ApiValidation.TrimOptional(request.LogoUrl),
             request.IsActive,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            NormalizeDomains(request.Domains),
+            ApiValidation.TrimOptional(request.HeroTitle),
+            ApiValidation.TrimOptional(request.HeroSubtitle),
+            ApiValidation.TrimOptional(request.PrimaryColor),
+            ApiValidation.TrimOptional(request.AccentColor),
+            ApiValidation.TrimOptional(request.BackgroundColor),
+            ApiValidation.TrimOptional(request.TextColor));
+        await outbox.PublishAsync(CatalogEventFactory.BrandChanged(brand, httpContext));
         await outbox.SaveChangesAndFlushMessagesAsync(ct);
 
         return Results.Ok(Response.FromBrand(brand));
@@ -45,6 +54,13 @@ public static class UpdateBrandEndpoint
         string Name,
         string? Description,
         string? LogoUrl,
+        IReadOnlyList<string>? Domains,
+        string? HeroTitle,
+        string? HeroSubtitle,
+        string? PrimaryColor,
+        string? AccentColor,
+        string? BackgroundColor,
+        string? TextColor,
         bool IsActive);
 
     public sealed record Response(
@@ -52,11 +68,37 @@ public static class UpdateBrandEndpoint
         string Name,
         string? Description,
         string? LogoUrl,
+        IReadOnlyList<string> Domains,
+        string? HeroTitle,
+        string? HeroSubtitle,
+        string PrimaryColor,
+        string AccentColor,
+        string BackgroundColor,
+        string TextColor,
         bool IsActive)
     {
         public static Response FromBrand(Brand brand)
         {
-            return new Response(brand.Id, brand.Name, brand.Description, brand.LogoUrl, brand.IsActive);
+            return new Response(
+                brand.Id,
+                brand.Name,
+                brand.Description,
+                brand.LogoUrl,
+                brand.Domains,
+                brand.HeroTitle,
+                brand.HeroSubtitle,
+                brand.PrimaryColor,
+                brand.AccentColor,
+                brand.BackgroundColor,
+                brand.TextColor,
+                brand.IsActive);
         }
+    }
+
+    private static IReadOnlyList<string> NormalizeDomains(IReadOnlyList<string>? domains)
+    {
+        return domains is null
+            ? []
+            : domains.Select(domain => domain.Trim()).Where(domain => domain.Length > 0).ToArray();
     }
 }

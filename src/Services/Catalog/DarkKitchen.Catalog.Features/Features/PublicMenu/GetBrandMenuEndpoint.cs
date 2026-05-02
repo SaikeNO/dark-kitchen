@@ -9,7 +9,19 @@ public static class GetBrandMenuEndpoint
         var brand = await db.Brands
             .AsNoTracking()
             .Where(entity => entity.Id == brandId && entity.IsActive)
-            .Select(entity => new { entity.Id, entity.Name })
+            .Select(entity => new
+            {
+                entity.Id,
+                entity.Name,
+                entity.Description,
+                entity.LogoUrl,
+                entity.HeroTitle,
+                entity.HeroSubtitle,
+                entity.PrimaryColor,
+                entity.AccentColor,
+                entity.BackgroundColor,
+                entity.TextColor
+            })
             .FirstOrDefaultAsync(ct);
 
         if (brand is null)
@@ -33,17 +45,37 @@ public static class GetBrandMenuEndpoint
                         product.Id,
                         product.Name,
                         product.Description,
+                        product.ImageUrl,
                         product.Price,
                         product.Currency))
                     .ToArray()))
             .ToArrayAsync(ct);
 
-        return Results.Ok(new Response(brand.Id, brand.Name, categories));
+        return Results.Ok(new Response(
+            brand.Id,
+            brand.Name,
+            brand.Description,
+            brand.LogoUrl,
+            brand.HeroTitle,
+            brand.HeroSubtitle,
+            brand.PrimaryColor,
+            brand.AccentColor,
+            brand.BackgroundColor,
+            brand.TextColor,
+            categories));
     }
 
     public sealed record Response(
         Guid BrandId,
         string BrandName,
+        string? BrandDescription,
+        string? LogoUrl,
+        string? HeroTitle,
+        string? HeroSubtitle,
+        string PrimaryColor,
+        string AccentColor,
+        string BackgroundColor,
+        string TextColor,
         IReadOnlyList<CategoryResponse> Categories);
 
     public sealed record CategoryResponse(
@@ -56,6 +88,7 @@ public static class GetBrandMenuEndpoint
         Guid Id,
         string Name,
         string? Description,
+        string? ImageUrl,
         decimal Price,
         string Currency);
 }

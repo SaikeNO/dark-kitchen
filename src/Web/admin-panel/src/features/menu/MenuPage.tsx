@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleCheck, Layers, Pencil, Plus, Power, Save, Search, Utensils, X } from "lucide-react";
+import { CircleCheck, ImageUp, Layers, Pencil, Plus, Power, Save, Search, Utensils, X } from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -19,7 +19,8 @@ import {
   deactivateProduct,
   saveCategory,
   saveProduct,
-  saveProductStationRoute
+  saveProductStationRoute,
+  uploadProductImage
 } from "./menuApi";
 import type { Category, Product } from "./menuTypes";
 
@@ -29,6 +30,7 @@ interface ProductFormState {
   readonly categoryId: string;
   readonly name: string;
   readonly description: string;
+  readonly imageUrl: string;
   readonly price: string;
   readonly currency: string;
   readonly stationId: string;
@@ -167,6 +169,7 @@ export function MenuProductsPage({
               <article key={product.id} className="grid gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
+                    {product.imageUrl === null ? <ImageUp aria-hidden="true" className="size-4 text-zinc-400" /> : <img src={product.imageUrl} alt="" className="size-10 rounded-md object-cover" />}
                     <h3 className="truncate font-bold text-zinc-950 dark:text-zinc-50">{product.name}</h3>
                     <StatusBadge isActive={product.isActive} />
                   </div>
@@ -229,6 +232,7 @@ export function MenuProductFormPage({
         categoryId: form.categoryId,
         name: form.name.trim(),
         description: form.description.trim(),
+        imageUrl: form.imageUrl.trim(),
         price: Number(form.price),
         currency: form.currency.trim().toUpperCase()
       });
@@ -277,6 +281,20 @@ export function MenuProductFormPage({
     mutation.mutate();
   }
 
+  async function uploadImage(file: File | undefined) {
+    if (file === undefined) {
+      return;
+    }
+
+    try {
+      const uploaded = await uploadProductImage(file);
+      setForm(current => ({ ...current, imageUrl: uploaded.url }));
+      toast.success("Wgrano zdjęcie produktu.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
+  }
+
   return (
     <div className="grid gap-4">
       <PageHeader
@@ -310,6 +328,25 @@ export function MenuProductFormPage({
           <Field label="Opis">
             <Textarea value={form.description} disabled={!canWrite} onChange={event => setForm({ ...form, description: event.currentTarget.value })} />
           </Field>
+
+          <Field label="Zdjęcie URL">
+            <TextInput value={form.imageUrl} disabled={!canWrite} onChange={event => setForm({ ...form, imageUrl: event.currentTarget.value })} />
+          </Field>
+
+          <Field label="Wgraj zdjęcie">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={!canWrite}
+              onChange={event => { void uploadImage(event.currentTarget.files?.[0]); }}
+            />
+          </Field>
+
+          {form.imageUrl.length > 0 && (
+            <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+              <img src={form.imageUrl} alt="" className="h-44 w-full object-cover" />
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
             <Field label="Cena">
@@ -583,6 +620,7 @@ function productToForm(product: Product | undefined, fallbackCategoryId: string)
     categoryId: product?.categoryId ?? fallbackCategoryId,
     name: product?.name ?? "",
     description: product?.description ?? "",
+    imageUrl: product?.imageUrl ?? "",
     price: product?.price.toString() ?? "0.00",
     currency: product?.currency ?? "PLN",
     stationId: product?.stationId ?? ""

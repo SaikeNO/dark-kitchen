@@ -59,6 +59,8 @@ public static class IntegrationEventTopology
             [DarkKitchenService.Storefront] = CreateSubscription(
                 DarkKitchenService.Storefront,
                 StorefrontQueue,
+                KnownIntegrationEventTypes.BrandChanged,
+                KnownIntegrationEventTypes.CategoryChanged,
                 KnownIntegrationEventTypes.MenuItemChanged,
                 KnownIntegrationEventTypes.ProductPriceChanged,
                 KnownIntegrationEventTypes.InventoryReservationFailed,

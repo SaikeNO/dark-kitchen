@@ -4,6 +4,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
     <ProjectReference Include="..\DarkKitchen.Storefront.Domain\DarkKitchen.Storefront.Domain.csproj" />
+    <ProjectReference Include="..\DarkKitchen.Storefront.Features\DarkKitchen.Storefront.Features.csproj" />
   </ItemGroup>
 </Project>

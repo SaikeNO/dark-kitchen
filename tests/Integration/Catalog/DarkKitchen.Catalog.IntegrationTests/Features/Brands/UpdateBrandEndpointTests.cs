@@ -12,10 +12,22 @@ public sealed class UpdateBrandEndpointTests(AspireAppFixture fixture) : Catalog
 
         var updated = await catalog.UpdateBrandAsync(
             brand.Id,
-            new BrandRequest($"Updated Brand {suffix}", "Updated", "https://example.test/logo.png", false));
+            new BrandRequest(
+                $"Updated Brand {suffix}",
+                "Updated",
+                "https://example.test/logo.png",
+                ["updated.example.test"],
+                "Updated hero",
+                "Updated subtitle",
+                "#111111",
+                "#222222",
+                "#ffffff",
+                "#000000",
+                false));
 
         Assert.Equal(brand.Id, updated.Id);
         Assert.Equal($"Updated Brand {suffix}", updated.Name);
+        Assert.Equal("#111111", updated.PrimaryColor);
         Assert.False(updated.IsActive);
     }
 
@@ -24,7 +36,9 @@ public sealed class UpdateBrandEndpointTests(AspireAppFixture fixture) : Catalog
     {
         using var catalog = await CreateManagerClientAsync();
 
-        using var response = await catalog.PutBrandAsync(Guid.NewGuid(), new BrandRequest("Missing Brand", null, null, true));
+        using var response = await catalog.PutBrandAsync(
+            Guid.NewGuid(),
+            new BrandRequest("Missing Brand", null, null, [], null, null, null, null, null, null, true));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

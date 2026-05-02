@@ -1,4 +1,4 @@
-import { getJson, postJson, putJson } from "../../api/http";
+import { getJson, postForm, postJson, putJson } from "../../api/http";
 import type { Category, CategoryPayload, Product, ProductPayload } from "./menuTypes";
 
 export function listCategories(signal?: AbortSignal) {
@@ -35,4 +35,10 @@ export function deactivateProduct(productId: string) {
 
 export function saveProductStationRoute(productId: string, stationId: string) {
   return putJson<unknown>(`/api/admin/products/${productId}/station-route`, { stationId });
+}
+
+export async function uploadProductImage(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return await postForm<{ readonly url: string }>("/api/admin/uploads/product-image", form);
 }
