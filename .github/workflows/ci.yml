@@ -148,7 +148,9 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
         timeout-minutes: 15
 
       - name: Lint
@@ -213,7 +215,9 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Restore .NET
         run: dotnet restore DarkKitchen.slnx
@@ -250,3 +254,4 @@ jobs:
           name: playwright-results
           path: artifacts/playwright-results
           if-no-files-found: ignore
+
