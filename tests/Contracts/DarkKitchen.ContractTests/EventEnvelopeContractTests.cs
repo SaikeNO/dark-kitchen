@@ -77,7 +77,10 @@ public sealed class EventEnvelopeContractTests
             CorrelationId,
             CausationId,
             BrandId,
-            new OrderAccepted(Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad")));
+            new OrderAccepted(
+                Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"),
+                "storefront",
+                [new OrderAcceptedLine(Guid.Parse("11969867-31f0-4f9b-a12f-3de093659ec2"), Guid.Parse("887ff5ea-620b-4574-aeb9-9c97b3be4216"), "Classic Smash", 2)]));
 
         Assert.Equal(KnownIntegrationEventTypes.OrderAccepted, envelope.EventType);
         Assert.Equal(IntegrationEventJson.CurrentSchemaVersion, envelope.SchemaVersion);
@@ -115,7 +118,10 @@ public sealed class EventEnvelopeContractTests
             causationId: null,
             schemaVersion: IntegrationEventJson.CurrentSchemaVersion,
             brandId: BrandId,
-            payload: new OrderAccepted(Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"))));
+            payload: new OrderAccepted(
+                Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"),
+                "storefront",
+                [])));
     }
 
     public static TheoryData<IntegrationEventContract, object, string> EventSamples => new()
@@ -189,7 +195,10 @@ public sealed class EventEnvelopeContractTests
         },
         {
             KnownIntegrationEventContracts.OrderAccepted,
-            new OrderAccepted(Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad")),
+            new OrderAccepted(
+                Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"),
+                "storefront",
+                [new OrderAcceptedLine(Guid.Parse("11969867-31f0-4f9b-a12f-3de093659ec2"), Guid.Parse("887ff5ea-620b-4574-aeb9-9c97b3be4216"), "Classic Smash", 2)]),
             """
             {
               "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
@@ -200,7 +209,16 @@ public sealed class EventEnvelopeContractTests
               "schemaVersion": 1,
               "brandId": "brand-burger-01",
               "payload": {
-                "orderId": "0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"
+                "orderId": "0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad",
+                "sourceChannel": "storefront",
+                "items": [
+                  {
+                    "orderItemId": "11969867-31f0-4f9b-a12f-3de093659ec2",
+                    "menuItemId": "887ff5ea-620b-4574-aeb9-9c97b3be4216",
+                    "name": "Classic Smash",
+                    "quantity": 2
+                  }
+                ]
               }
             }
             """

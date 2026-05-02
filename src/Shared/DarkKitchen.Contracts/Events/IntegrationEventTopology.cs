@@ -47,7 +47,10 @@ public static class IntegrationEventTopology
                 KnownIntegrationEventTypes.InventoryReserved,
                 KnownIntegrationEventTypes.InventoryReservationFailed,
                 KnownIntegrationEventTypes.MenuItemChanged,
-                KnownIntegrationEventTypes.ProductPriceChanged),
+                KnownIntegrationEventTypes.ProductPriceChanged,
+                KnownIntegrationEventTypes.ItemPreparationStarted,
+                KnownIntegrationEventTypes.OrderReadyForPacking,
+                KnownIntegrationEventTypes.OrderReadyForPickup),
             [DarkKitchenService.Packing] = CreateSubscription(
                 DarkKitchenService.Packing,
                 PackingQueue,

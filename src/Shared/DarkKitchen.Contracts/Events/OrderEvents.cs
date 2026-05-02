@@ -10,7 +10,16 @@ public sealed record OrderPlacedLine(
     Guid MenuItemId,
     int Quantity);
 
-public sealed record OrderAccepted(Guid OrderId);
+public sealed record OrderAccepted(
+    Guid OrderId,
+    string SourceChannel,
+    IReadOnlyList<OrderAcceptedLine> Items);
+
+public sealed record OrderAcceptedLine(
+    Guid OrderItemId,
+    Guid MenuItemId,
+    string Name,
+    int Quantity);
 
 public sealed record OrderReadyForPacking(Guid OrderId);
 
