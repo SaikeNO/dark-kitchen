@@ -15,6 +15,8 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
+  checks: write
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -50,15 +52,84 @@ jobs:
       - name: Build
         run: dotnet build DarkKitchen.slnx --no-restore -p:UseSharedCompilation=false -m:1 --verbosity minimal
 
-      - name: Test
-        run: dotnet test DarkKitchen.slnx --no-build --logger "trx;LogFileName=dotnet-tests.trx" --results-directory TestResults
+      - name: Test fast .NET suites
+        run: |
+          mkdir -p TestResults/dotnet
+          status=0
+          dotnet test tests/Architecture/DarkKitchen.ArchitectureTests/DarkKitchen.ArchitectureTests.csproj --no-build --logger "trx;LogFileName=architecture.trx" --results-directory TestResults/dotnet || status=1
+          dotnet test tests/Contracts/DarkKitchen.ContractTests/DarkKitchen.ContractTests.csproj --no-build --logger "trx;LogFileName=contracts.trx" --results-directory TestResults/dotnet || status=1
+          exit $status
+
+      - name: Publish .NET test report
+        if: ${{ !cancelled() && hashFiles('TestResults/dotnet/*.trx') != '' }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: .NET Fast Tests
+          path: TestResults/dotnet/*.trx
+          reporter: dotnet-trx
 
       - name: Upload .NET test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: dotnet-test-results
-          path: TestResults
+          path: TestResults/dotnet
+          if-no-files-found: ignore
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('global.json', 'Directory.Packages.props', 'NuGet.config', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore DarkKitchen.slnx
+
+      - name: Build
+        run: dotnet build DarkKitchen.slnx --no-restore -p:UseSharedCompilation=false -m:1 --verbosity minimal
+
+      - name: Test integration suites
+        run: |
+          mkdir -p TestResults/integration
+          status=0
+          dotnet test tests/Integration/AppHost/DarkKitchen.AppHost.IntegrationTests/DarkKitchen.AppHost.IntegrationTests.csproj --no-build --logger "trx;LogFileName=apphost.trx" --results-directory TestResults/integration || status=1
+          dotnet test tests/Integration/Catalog/DarkKitchen.Catalog.IntegrationTests/DarkKitchen.Catalog.IntegrationTests.csproj --no-build --logger "trx;LogFileName=catalog.trx" --results-directory TestResults/integration || status=1
+          dotnet test tests/Integration/Inventory/DarkKitchen.Inventory.IntegrationTests/DarkKitchen.Inventory.IntegrationTests.csproj --no-build --logger "trx;LogFileName=inventory.trx" --results-directory TestResults/integration || status=1
+          dotnet test tests/Integration/Kds/DarkKitchen.Kds.IntegrationTests/DarkKitchen.Kds.IntegrationTests.csproj --no-build --logger "trx;LogFileName=kds.trx" --results-directory TestResults/integration || status=1
+          dotnet test tests/Integration/OrderManagement/DarkKitchen.OrderManagement.IntegrationTests/DarkKitchen.OrderManagement.IntegrationTests.csproj --no-build --logger "trx;LogFileName=order-management.trx" --results-directory TestResults/integration || status=1
+          dotnet test tests/Integration/Packing/DarkKitchen.Packing.IntegrationTests/DarkKitchen.Packing.IntegrationTests.csproj --no-build --logger "trx;LogFileName=packing.trx" --results-directory TestResults/integration || status=1
+          dotnet test tests/Integration/Storefront/DarkKitchen.Storefront.IntegrationTests/DarkKitchen.Storefront.IntegrationTests.csproj --no-build --logger "trx;LogFileName=storefront.trx" --results-directory TestResults/integration || status=1
+          exit $status
+
+      - name: Publish integration test report
+        if: ${{ !cancelled() && hashFiles('TestResults/integration/*.trx') != '' }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: Aspire Integration Tests
+          path: TestResults/integration/*.trx
+          reporter: dotnet-trx
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-results
+          path: TestResults/integration
           if-no-files-found: ignore
 
   frontend:
@@ -77,9 +148,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm ci
         timeout-minutes: 15
 
       - name: Lint
@@ -89,14 +158,35 @@ jobs:
         run: npm run build
 
       - name: Test frontend
-        run: npm run test:frontend
+        run: |
+          mkdir -p TestResults/frontend
+          status=0
+          npm --workspace @dark-kitchen/admin-panel run test -- --run --reporter=default --reporter=junit --outputFile=../../../TestResults/frontend/admin-panel.junit.xml || status=1
+          npm --workspace @dark-kitchen/inventory-panel run test -- --run --reporter=default --reporter=junit --outputFile=../../../TestResults/frontend/inventory-panel.junit.xml || status=1
+          npm --workspace @dark-kitchen/storefront run test -- --run --reporter=default --reporter=junit --outputFile=../../../TestResults/frontend/storefront.junit.xml || status=1
+          npm --workspace @dark-kitchen/kitchen-app run test -- --run --reporter=default --reporter=junit --outputFile=../../../TestResults/frontend/kitchen-app.junit.xml || status=1
+          npm --workspace @dark-kitchen/packing-terminal run test -- --run --reporter=default --reporter=junit --outputFile=../../../TestResults/frontend/packing-terminal.junit.xml || status=1
+          exit $status
+
+      - name: Publish frontend test report
+        if: ${{ !cancelled() && hashFiles('TestResults/frontend/*.xml') != '' }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: Frontend Tests
+          path: TestResults/frontend/*.xml
+          reporter: java-junit
+
+      - name: Upload frontend test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-test-results
+          path: TestResults/frontend
+          if-no-files-found: ignore
 
   e2e:
     name: e2e
     runs-on: ubuntu-latest
-    needs:
-      - dotnet
-      - frontend
 
     steps:
       - name: Checkout
@@ -123,18 +213,27 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm ci
 
       - name: Restore .NET
         run: dotnet restore DarkKitchen.slnx
+
+      - name: Create ASP.NET Core dev certificate
+        run: dotnet dev-certs https
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: npm run test:e2e
+
+      - name: Publish E2E test report
+        if: ${{ !cancelled() && hashFiles('artifacts/playwright-results/junit.xml') != '' }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: Playwright E2E
+          path: artifacts/playwright-results/junit.xml
+          reporter: java-junit
 
       - name: Upload Playwright report
         if: always()

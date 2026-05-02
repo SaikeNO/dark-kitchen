@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const webServerTimeout = process.env.CI ? 300_000 : 180_000;
+const webServerTimeout = process.env.CI ? 600_000 : 180_000;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -14,6 +14,7 @@ export default defineConfig({
   workers: 1,
   reporter: [
     ["list"],
+    ["junit", { outputFile: "artifacts/playwright-results/junit.xml" }],
     ["html", { outputFolder: "artifacts/playwright-report", open: "never" }]
   ],
   outputDir: "artifacts/playwright-results",

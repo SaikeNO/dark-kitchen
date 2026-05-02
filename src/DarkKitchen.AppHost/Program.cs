@@ -88,31 +88,31 @@ if (includeWebApps)
     var adminPanel = builder.AddViteApp("admin-panel", "../Web/admin-panel")
         .WithExternalHttpEndpoints()
         .WithReference(catalogApi)
-        .WithEnvironment("VITE_API_BASE_URL", catalogApi.GetEndpoint("https"))
+        .WithEnvironment("VITE_API_BASE_URL", catalogApi.GetEndpoint("http"))
         .WaitFor(catalogApi);
 
     var inventoryPanel = builder.AddViteApp("inventory-panel", "../Web/inventory-panel")
         .WithExternalHttpEndpoints()
         .WithReference(inventoryApi)
-        .WithEnvironment("VITE_API_BASE_URL", inventoryApi.GetEndpoint("https"))
+        .WithEnvironment("VITE_API_BASE_URL", inventoryApi.GetEndpoint("http"))
         .WaitFor(inventoryApi);
 
     var storefront = builder.AddViteApp("storefront", "../Web/storefront")
         .WithExternalHttpEndpoints()
         .WithReference(storefrontApi)
-        .WithEnvironment("VITE_API_BASE_URL", storefrontApi.GetEndpoint("https"))
+        .WithEnvironment("VITE_API_BASE_URL", storefrontApi.GetEndpoint("http"))
         .WaitFor(storefrontApi);
 
     var kitchenApp = builder.AddViteApp("kitchen-app", "../Web/kitchen-app")
         .WithExternalHttpEndpoints()
         .WithReference(kdsApi)
-        .WithEnvironment("VITE_API_BASE_URL", kdsApi.GetEndpoint("https"))
+        .WithEnvironment("VITE_API_BASE_URL", kdsApi.GetEndpoint("http"))
         .WaitFor(kdsApi);
 
     var packingTerminal = builder.AddViteApp("packing-terminal", "../Web/packing-terminal")
         .WithExternalHttpEndpoints()
         .WithReference(packingApi)
-        .WithEnvironment("VITE_API_BASE_URL", packingApi.GetEndpoint("https"))
+        .WithEnvironment("VITE_API_BASE_URL", packingApi.GetEndpoint("http"))
         .WaitFor(packingApi);
 
     if (useFixedWebPorts)
