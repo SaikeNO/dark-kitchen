@@ -68,6 +68,11 @@ public sealed class AspireAppFixture : IAsyncLifetime
 
     public HttpClient CreateHttpClient(string resourceName) => App.CreateHttpClient(resourceName);
 
+    public async Task<string?> GetConnectionStringAsync(string resourceName)
+    {
+        return await App.GetConnectionStringAsync(resourceName);
+    }
+
     public async Task WaitForHealthyAsync(string resourceName)
     {
         using var cts = new CancellationTokenSource(DefaultTimeout);

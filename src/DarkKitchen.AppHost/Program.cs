@@ -91,6 +91,12 @@ if (includeWebApps)
         .WithEnvironment("VITE_API_BASE_URL", catalogApi.GetEndpoint("https"))
         .WaitFor(catalogApi);
 
+    var inventoryPanel = builder.AddViteApp("inventory-panel", "../Web/inventory-panel")
+        .WithExternalHttpEndpoints()
+        .WithReference(inventoryApi)
+        .WithEnvironment("VITE_API_BASE_URL", inventoryApi.GetEndpoint("https"))
+        .WaitFor(inventoryApi);
+
     var storefront = builder.AddViteApp("storefront", "../Web/storefront")
         .WithExternalHttpEndpoints()
         .WithReference(storefrontApi)
@@ -112,6 +118,7 @@ if (includeWebApps)
     if (useFixedWebPorts)
     {
         ConfigureFixedHttpPort(adminPanel, 5173);
+        ConfigureFixedHttpPort(inventoryPanel, 5177);
         ConfigureFixedHttpPort(storefront, 5174);
         ConfigureFixedHttpPort(kitchenApp, 5175);
         ConfigureFixedHttpPort(packingTerminal, 5176);

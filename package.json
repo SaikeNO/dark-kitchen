@@ -4,6 +4,7 @@
   "workspaces": [
     "src/Web/packages/*",
     "src/Web/admin-panel",
+    "src/Web/inventory-panel",
     "src/Web/storefront",
     "src/Web/kitchen-app",
     "src/Web/packing-terminal"
@@ -33,6 +34,7 @@
     "test:integration:storefront": "dotnet test tests/Integration/Storefront/DarkKitchen.Storefront.IntegrationTests/DarkKitchen.Storefront.IntegrationTests.csproj",
     "typecheck": "npm run typecheck --workspaces",
     "dev:admin": "npm --workspace @dark-kitchen/admin-panel run dev",
+    "dev:inventory": "npm --workspace @dark-kitchen/inventory-panel run dev",
     "dev:storefront": "npm --workspace @dark-kitchen/storefront run dev",
     "dev:kitchen": "npm --workspace @dark-kitchen/kitchen-app run dev",
     "dev:packing": "npm --workspace @dark-kitchen/packing-terminal run dev"
