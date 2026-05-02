@@ -29,6 +29,7 @@
   <ItemGroup>
     <Using Include="System.Net" />
     <Using Include="System.Net.Http.Json" />
+    <Using Include="DarkKitchen.Testing.Catalog" />
     <Using Include="DarkKitchen.Testing.Aspire" />
     <Using Include="DarkKitchen.Testing.Http" />
     <Using Include="Xunit" />

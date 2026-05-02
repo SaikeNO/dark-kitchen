@@ -19,6 +19,7 @@ public sealed class AppHostTopologyTests
         Assert.Contains("kds-api", resourceNames);
         Assert.Contains("packing-api", resourceNames);
         Assert.Contains("admin-panel", resourceNames);
+        Assert.Contains("inventory-panel", resourceNames);
         Assert.Contains("storefront", resourceNames);
         Assert.Contains("kitchen-app", resourceNames);
         Assert.Contains("packing-terminal", resourceNames);
@@ -34,6 +35,7 @@ public sealed class AppHostTopologyTests
 
         Assert.Contains("catalog-api", resourceNames);
         Assert.DoesNotContain("admin-panel", resourceNames);
+        Assert.DoesNotContain("inventory-panel", resourceNames);
         Assert.DoesNotContain("storefront", resourceNames);
         Assert.DoesNotContain("kitchen-app", resourceNames);
         Assert.DoesNotContain("packing-terminal", resourceNames);

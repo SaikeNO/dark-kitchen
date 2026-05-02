@@ -20,7 +20,8 @@ public static class IntegrationEventBusExtensions
     public static WebApplicationBuilder AddIntegrationEventBus(
         this WebApplicationBuilder builder,
         string postgresConnectionName,
-        DarkKitchenService service)
+        DarkKitchenService service,
+        params Assembly[] handlerAssemblies)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -36,6 +37,10 @@ public static class IntegrationEventBusExtensions
         builder.Host.UseWolverine(options =>
         {
             options.ApplicationAssembly = Assembly.GetEntryAssembly() ?? typeof(IntegrationEventBusExtensions).Assembly;
+            foreach (var handlerAssembly in handlerAssemblies)
+            {
+                options.Discovery.IncludeAssembly(handlerAssembly);
+            }
 
             options.PersistMessagesWithPostgresql(postgresConnectionString);
             options.UseSystemTextJsonForSerialization(ConfigureJson);

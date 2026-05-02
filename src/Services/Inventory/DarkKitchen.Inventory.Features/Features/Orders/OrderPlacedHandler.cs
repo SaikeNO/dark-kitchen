@@ -1,27 +1,36 @@
 using DarkKitchen.Contracts.Events;
 using Microsoft.EntityFrameworkCore;
+using Wolverine;
 
-namespace DarkKitchen.Inventory.Features.Application;
+namespace DarkKitchen.Inventory.Features.Features.Orders;
 
-public sealed class InventoryReservationService(IInventoryOutbox outbox)
+public static class OrderPlacedHandler
 {
-    public async Task HandleOrderPlacedAsync(
+    public static async Task Handle(
         IntegrationEventEnvelope<OrderPlaced> envelope,
+        InventoryDbContext db,
+        IMessageBus bus,
         CancellationToken ct)
     {
-        var db = outbox.DbContext;
+        var result = await ReserveAsync(envelope, db, ct);
+        await PublishAsync(bus, result);
+    }
+
+    public static async Task<object> ReserveAsync(
+        IntegrationEventEnvelope<OrderPlaced> envelope,
+        InventoryDbContext db,
+        CancellationToken ct)
+    {
         var existing = await LoadReservationAsync(envelope.Payload.OrderId, db, ct);
         if (existing is not null)
         {
-            await PublishExistingAsync(envelope, existing, ct);
-            return;
+            return ExistingResult(envelope, existing);
         }
 
         var requirements = await BuildRequirementsAsync(envelope.Payload, db, ct);
         if (requirements is null || requirements.Count == 0)
         {
-            await CreateFailureAsync(envelope, InventoryReasonCodes.RecipeMissing, ct);
-            return;
+            return await CreateFailureAsync(envelope, InventoryReasonCodes.RecipeMissing, db, ct);
         }
 
         var itemIds = requirements.Keys.ToArray();
@@ -35,13 +44,13 @@ public sealed class InventoryReservationService(IInventoryOutbox outbox)
                 !availableItems.TryGetValue(requirement.Key, out var item)
                 || item.AvailableQuantity < requirement.Value))
         {
-            await CreateFailureAsync(envelope, InventoryReasonCodes.IngredientUnavailable, ct);
-            return;
+            return await CreateFailureAsync(envelope, InventoryReasonCodes.IngredientUnavailable, db, ct);
         }
 
         var now = DateTimeOffset.UtcNow;
         StockReservation? reservationToRepublish = null;
         var updateFailed = false;
+        Guid reservationId = Guid.Empty;
 
         await using (var transaction = await db.Database.BeginTransactionAsync(ct))
         {
@@ -79,6 +88,7 @@ public sealed class InventoryReservationService(IInventoryOutbox outbox)
                         envelope.Payload.OrderId,
                         requirements.Select(requirement => StockReservationLine.Create(requirement.Key, requirement.Value)),
                         now);
+                    reservationId = reservation.Id;
 
                     db.StockReservations.Add(reservation);
                     foreach (var requirement in requirements)
@@ -96,24 +106,20 @@ public sealed class InventoryReservationService(IInventoryOutbox outbox)
                             "Order reservation"));
                     }
 
-                    await outbox.PublishAsync(InventoryEventFactory.Reserved(envelope, reservation.Id), ct);
-                    await outbox.SaveChangesAsync(ct);
+                    await db.SaveChangesAsync(ct);
                     await transaction.CommitAsync(ct);
-                    await outbox.FlushAsync(ct);
                 }
             }
         }
 
         if (reservationToRepublish is not null)
         {
-            await PublishExistingAsync(envelope, reservationToRepublish, ct);
-            return;
+            return ExistingResult(envelope, reservationToRepublish);
         }
 
-        if (updateFailed)
-        {
-            await CreateFailureAsync(envelope, InventoryReasonCodes.IngredientUnavailable, ct);
-        }
+        return updateFailed
+            ? await CreateFailureAsync(envelope, InventoryReasonCodes.IngredientUnavailable, db, ct)
+            : InventoryEventFactory.Reserved(envelope, reservationId);
     }
 
     private static async Task<StockReservation?> LoadReservationAsync(
@@ -156,17 +162,16 @@ public sealed class InventoryReservationService(IInventoryOutbox outbox)
         return requirements;
     }
 
-    private async Task CreateFailureAsync(
+    private static async Task<object> CreateFailureAsync(
         IntegrationEventEnvelope<OrderPlaced> envelope,
         string reasonCode,
+        InventoryDbContext db,
         CancellationToken ct)
     {
-        var db = outbox.DbContext;
         var existing = await LoadReservationAsync(envelope.Payload.OrderId, db, ct);
         if (existing is not null)
         {
-            await PublishExistingAsync(envelope, existing, ct);
-            return;
+            return ExistingResult(envelope, existing);
         }
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
@@ -174,34 +179,38 @@ public sealed class InventoryReservationService(IInventoryOutbox outbox)
         if (existing is not null)
         {
             await transaction.RollbackAsync(ct);
-            await PublishExistingAsync(envelope, existing, ct);
-            return;
+            return ExistingResult(envelope, existing);
         }
 
         db.StockReservations.Add(StockReservation.Fail(envelope.Payload.OrderId, reasonCode, DateTimeOffset.UtcNow));
-        await outbox.PublishAsync(InventoryEventFactory.Failed(envelope, reasonCode), ct);
-        await outbox.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
-        await outbox.FlushAsync(ct);
+        return InventoryEventFactory.Failed(envelope, reasonCode);
     }
 
-    private async Task PublishExistingAsync(
+    private static object ExistingResult(
         IntegrationEventEnvelope<OrderPlaced> envelope,
-        StockReservation reservation,
-        CancellationToken ct)
+        StockReservation reservation)
     {
-        if (reservation.Status == StockReservationStatus.Reserved)
-        {
-            await outbox.PublishAsync(InventoryEventFactory.Reserved(envelope, reservation.Id), ct);
-        }
-        else
-        {
-            await outbox.PublishAsync(InventoryEventFactory.Failed(
+        return reservation.Status == StockReservationStatus.Reserved
+            ? InventoryEventFactory.Reserved(envelope, reservation.Id)
+            : InventoryEventFactory.Failed(
                 envelope,
-                reservation.FailureReasonCode ?? InventoryReasonCodes.IngredientUnavailable), ct);
-        }
+                reservation.FailureReasonCode ?? InventoryReasonCodes.IngredientUnavailable);
+    }
 
-        await outbox.SaveChangesAsync(ct);
-        await outbox.FlushAsync(ct);
+    private static async Task PublishAsync(IMessageBus bus, object message)
+    {
+        switch (message)
+        {
+            case IntegrationEventEnvelope<InventoryReserved> reserved:
+                await bus.PublishAsync(reserved);
+                break;
+            case IntegrationEventEnvelope<InventoryReservationFailed> failed:
+                await bus.PublishAsync(failed);
+                break;
+            default:
+                throw new InvalidOperationException($"Unsupported inventory reservation result: {message.GetType()}.");
+        }
     }
 }

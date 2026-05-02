@@ -1,5 +1,5 @@
 using DarkKitchen.Contracts.Events;
-using DarkKitchen.Inventory.Features.Handlers;
+using DarkKitchen.Inventory.Features.Features.Recipes;
 using Microsoft.EntityFrameworkCore;
 
 namespace DarkKitchen.Inventory.IntegrationTests.Features.EventHandling;

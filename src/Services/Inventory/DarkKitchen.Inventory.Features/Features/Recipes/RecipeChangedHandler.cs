@@ -1,7 +1,7 @@
 using DarkKitchen.Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 
-namespace DarkKitchen.Inventory.Features.Handlers;
+namespace DarkKitchen.Inventory.Features.Features.Recipes;
 
 public static class RecipeChangedHandler
 {

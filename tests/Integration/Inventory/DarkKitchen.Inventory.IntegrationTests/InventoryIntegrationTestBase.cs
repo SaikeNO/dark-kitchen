@@ -1,6 +1,7 @@
 using DarkKitchen.Contracts.Events;
 using DarkKitchen.Inventory.Features.Application;
 using DarkKitchen.Inventory.Infrastructure.Persistence;
+using DarkKitchen.Testing.Catalog;
 using Microsoft.EntityFrameworkCore;
 
 namespace DarkKitchen.Inventory.IntegrationTests;
@@ -11,6 +12,14 @@ public abstract class InventoryIntegrationTestBase(AspireAppFixture fixture)
     {
         await fixture.WaitForHealthyAsync("inventory-api");
         return fixture.CreateHttpClient("inventory-api");
+    }
+
+    protected async Task<CatalogApiClient> CreateCatalogManagerClientAsync()
+    {
+        await fixture.WaitForHealthyAsync("catalog-api");
+        var client = new CatalogApiClient(fixture.CreateHttpClient("catalog-api"));
+        await client.LoginAsManagerAsync();
+        return client;
     }
 
     protected async Task<InventoryDbContext> CreateDbContextAsync()

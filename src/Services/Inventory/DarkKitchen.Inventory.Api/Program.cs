@@ -1,4 +1,5 @@
 using DarkKitchen.Contracts.Events;
+using DarkKitchen.Inventory.Features.Application;
 using DarkKitchen.Inventory.Features.Features;
 using DarkKitchen.Inventory.Infrastructure;
 using DarkKitchen.Inventory.Infrastructure.Persistence;
@@ -7,7 +8,7 @@ using DarkKitchen.ServiceDefaults;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddIntegrationEventBus("inventory-db", DarkKitchenService.Inventory);
+builder.AddIntegrationEventBus("inventory-db", DarkKitchenService.Inventory, typeof(InventoryDbContext).Assembly);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("inventory-panel", policy =>

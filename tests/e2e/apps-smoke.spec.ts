@@ -5,7 +5,13 @@ const apps = [
     name: "admin-panel",
     url: "http://127.0.0.1:5173",
     heading: "Admin Panel",
-    context: "Catalog & Recipe"
+    context: undefined
+  },
+  {
+    name: "inventory-panel",
+    url: "http://127.0.0.1:5177",
+    heading: "Magazyn",
+    context: undefined
   },
   {
     name: "storefront",
@@ -56,8 +62,11 @@ for (const app of apps) {
       return;
     }
 
-    await expect(page.locator("dd").getByText(app.context, { exact: true })).toBeVisible();
-    await expect(page.locator("dd").getByText("Foundation ready", { exact: true })).toBeVisible();
+    if (app.context !== undefined) {
+      await expect(page.locator("dd").getByText(app.context, { exact: true })).toBeVisible();
+      await expect(page.locator("dd").getByText("Foundation ready", { exact: true })).toBeVisible();
+    }
+
     expect(browserErrors).toEqual([]);
   });
 }

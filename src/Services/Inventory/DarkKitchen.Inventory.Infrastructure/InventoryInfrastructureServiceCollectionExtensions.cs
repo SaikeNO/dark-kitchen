@@ -20,9 +20,6 @@ public static class InventoryInfrastructureServiceCollectionExtensions
                 npgsql => npgsql.MigrationsAssembly(typeof(InventoryDbContextFactory).Assembly.FullName));
         });
 
-        services.AddScoped<IInventoryOutbox, WolverineInventoryOutbox>();
-        services.AddScoped<InventoryReservationService>();
-
         return services;
     }
 }

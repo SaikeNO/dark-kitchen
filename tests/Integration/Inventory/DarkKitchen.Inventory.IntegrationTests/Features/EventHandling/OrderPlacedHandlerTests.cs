@@ -1,6 +1,7 @@
 using DarkKitchen.Contracts.Events;
 using DarkKitchen.Inventory.Domain;
 using DarkKitchen.Inventory.Features.Application;
+using DarkKitchen.Inventory.Features.Features.Orders;
 using Microsoft.EntityFrameworkCore;
 
 namespace DarkKitchen.Inventory.IntegrationTests.Features.EventHandling;
@@ -13,15 +14,13 @@ public sealed class OrderPlacedHandlerTests(AspireAppFixture fixture) : Inventor
     {
         await using var db = await CreateDbContextAsync();
         var scenario = await SeedReservationScenarioAsync(db, onHandQuantity: 10, recipeQuantity: 2);
-        var outbox = new FakeInventoryOutbox(db);
-        var service = new InventoryReservationService(outbox);
         var orderId = Guid.NewGuid();
 
-        await service.HandleOrderPlacedAsync(CreateOrder(orderId, scenario.ProductId, quantity: 2), CancellationToken.None);
+        var result = await OrderPlacedHandler.ReserveAsync(CreateOrder(orderId, scenario.ProductId, quantity: 2), db, CancellationToken.None);
 
         var item = await db.WarehouseItems.AsNoTracking().SingleAsync(entity => entity.Id == scenario.IngredientId);
         Assert.Equal(4, item.ReservedQuantity);
-        Assert.Contains(outbox.Published, message => message is IntegrationEventEnvelope<InventoryReserved>);
+        Assert.IsType<IntegrationEventEnvelope<InventoryReserved>>(result);
         Assert.Equal(1, await db.InventoryLogs.CountAsync(log => log.OrderId == orderId));
     }
 
@@ -29,12 +28,10 @@ public sealed class OrderPlacedHandlerTests(AspireAppFixture fixture) : Inventor
     public async Task MissingRecipePublishesReservationFailed()
     {
         await using var db = await CreateDbContextAsync();
-        var outbox = new FakeInventoryOutbox(db);
-        var service = new InventoryReservationService(outbox);
 
-        await service.HandleOrderPlacedAsync(CreateOrder(Guid.NewGuid(), Guid.NewGuid(), quantity: 1), CancellationToken.None);
+        var result = await OrderPlacedHandler.ReserveAsync(CreateOrder(Guid.NewGuid(), Guid.NewGuid(), quantity: 1), db, CancellationToken.None);
 
-        var failed = Assert.IsType<IntegrationEventEnvelope<InventoryReservationFailed>>(Assert.Single(outbox.Published));
+        var failed = Assert.IsType<IntegrationEventEnvelope<InventoryReservationFailed>>(result);
         Assert.Equal(InventoryReasonCodes.RecipeMissing, failed.Payload.ReasonCode);
     }
 
@@ -43,12 +40,10 @@ public sealed class OrderPlacedHandlerTests(AspireAppFixture fixture) : Inventor
     {
         await using var db = await CreateDbContextAsync();
         var scenario = await SeedReservationScenarioAsync(db, onHandQuantity: 1, recipeQuantity: 2);
-        var outbox = new FakeInventoryOutbox(db);
-        var service = new InventoryReservationService(outbox);
 
-        await service.HandleOrderPlacedAsync(CreateOrder(Guid.NewGuid(), scenario.ProductId, quantity: 1), CancellationToken.None);
+        var result = await OrderPlacedHandler.ReserveAsync(CreateOrder(Guid.NewGuid(), scenario.ProductId, quantity: 1), db, CancellationToken.None);
 
-        var failed = Assert.IsType<IntegrationEventEnvelope<InventoryReservationFailed>>(Assert.Single(outbox.Published));
+        var failed = Assert.IsType<IntegrationEventEnvelope<InventoryReservationFailed>>(result);
         Assert.Equal(InventoryReasonCodes.IngredientUnavailable, failed.Payload.ReasonCode);
     }
 
@@ -57,12 +52,10 @@ public sealed class OrderPlacedHandlerTests(AspireAppFixture fixture) : Inventor
     {
         await using var db = await CreateDbContextAsync();
         var scenario = await SeedReservationScenarioAsync(db, onHandQuantity: 10, recipeQuantity: 2);
-        var outbox = new FakeInventoryOutbox(db);
-        var service = new InventoryReservationService(outbox);
         var orderId = Guid.NewGuid();
 
-        await service.HandleOrderPlacedAsync(CreateOrder(orderId, scenario.ProductId, quantity: 1), CancellationToken.None);
-        await service.HandleOrderPlacedAsync(CreateOrder(orderId, scenario.ProductId, quantity: 1), CancellationToken.None);
+        await OrderPlacedHandler.ReserveAsync(CreateOrder(orderId, scenario.ProductId, quantity: 1), db, CancellationToken.None);
+        await OrderPlacedHandler.ReserveAsync(CreateOrder(orderId, scenario.ProductId, quantity: 1), db, CancellationToken.None);
 
         var item = await db.WarehouseItems.AsNoTracking().SingleAsync(entity => entity.Id == scenario.IngredientId);
         Assert.Equal(2, item.ReservedQuantity);
@@ -79,14 +72,10 @@ public sealed class OrderPlacedHandlerTests(AspireAppFixture fixture) : Inventor
 
         await using var db1 = await CreateDbContextAsync();
         await using var db2 = await CreateDbContextAsync();
-        var outbox1 = new FakeInventoryOutbox(db1);
-        var outbox2 = new FakeInventoryOutbox(db2);
-        var service1 = new InventoryReservationService(outbox1);
-        var service2 = new InventoryReservationService(outbox2);
 
         await Task.WhenAll(
-            service1.HandleOrderPlacedAsync(envelope1, CancellationToken.None),
-            service2.HandleOrderPlacedAsync(envelope2, CancellationToken.None));
+            OrderPlacedHandler.ReserveAsync(envelope1, db1, CancellationToken.None),
+            OrderPlacedHandler.ReserveAsync(envelope2, db2, CancellationToken.None));
 
         await using var assertDb = await CreateDbContextAsync();
         var orderIds = new[] { envelope1.Payload.OrderId, envelope2.Payload.OrderId };
