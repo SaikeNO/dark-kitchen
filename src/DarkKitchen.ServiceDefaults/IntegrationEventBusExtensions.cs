@@ -58,9 +58,7 @@ public static class IntegrationEventBusExtensions
                     .UseDurableInbox();
             }
 
-            options.Policies.UseDurableInboxOnAllListeners();
             options.Policies.UseDurableOutboxOnAllSendingEndpoints();
-            options.Policies.AutoApplyIdempotencyOnNonTransactionalHandlers();
             options.Durability.KeepAfterMessageHandling = TimeSpan.FromMinutes(30);
 
             options.Services.AddResourceSetupOnStartup(StartupAction.SetupOnly);

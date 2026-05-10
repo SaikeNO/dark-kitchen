@@ -9,6 +9,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -19,12 +22,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\DarkKitchen.Testing\DarkKitchen.Testing.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Services\Kds\DarkKitchen.Kds.Features\DarkKitchen.Kds.Features.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Services\Kds\DarkKitchen.Kds.Infrastructure\DarkKitchen.Kds.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Shared\DarkKitchen.Contracts\DarkKitchen.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="System.Net" />
     <Using Include="DarkKitchen.Testing.Aspire" />
     <Using Include="DarkKitchen.Testing.Http" />
+    <Using Include="DarkKitchen.Kds.Features.Application" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>
