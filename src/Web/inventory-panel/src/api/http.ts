@@ -21,6 +21,7 @@ interface ApiProblem {
 
 export const http = axios.create({
   baseURL: apiClient.baseUrl.length > 0 ? apiClient.baseUrl : undefined,
+  headers: { "X-DarkKitchen-Role": "Operator" },
   timeout: 10_000,
   withCredentials: true
 });

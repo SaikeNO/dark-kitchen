@@ -20,6 +20,7 @@ public sealed class EndToEndOrderFlowTests(AspireAppFixture fixture)
         await WaitForOrderStatusAsync(order.OrderId!.Value, "Accepted");
 
         using var kds = fixture.CreateHttpClient("kds-api");
+        kds.DefaultRequestHeaders.Add("X-DarkKitchen-Role", "Operator");
         var station = await GetGrillStationAsync(kds);
         var task = await WaitForKitchenTaskAsync(kds, station.Id, order.OrderId.Value);
 
@@ -34,15 +35,18 @@ public sealed class EndToEndOrderFlowTests(AspireAppFixture fixture)
         }
 
         using var packing = fixture.CreateHttpClient("packing-api");
+        packing.DefaultRequestHeaders.Add("X-DarkKitchen-Role", "Operator");
         var manifest = await WaitForManifestAsync(packing, order.OrderId.Value, "ReadyForPacking");
-        using (var issued = await packing.PostAsync($"/api/packing/manifests/{manifest.Id}/issued", null))
+        using (var issued = await packing.PostAsJsonAsync(
+            $"/api/packing/manifests/{manifest.Id}/issued",
+            new IssueManifestRequest(manifest.PickupCode)))
         {
             issued.EnsureSuccessStatusCode();
         }
 
-        var ready = await WaitForOrderStatusAsync(order.OrderId.Value, "ReadyForPickup");
-        Assert.Equal(order.CorrelationId, ready.CorrelationId);
-        Assert.Contains(ready.History, item => item.CorrelationId == order.CorrelationId);
+        var completedOrder = await WaitForOrderStatusAsync(order.OrderId.Value, "Completed");
+        Assert.Equal(order.CorrelationId, completedOrder.CorrelationId);
+        Assert.Contains(completedOrder.History, item => item.CorrelationId == order.CorrelationId);
     }
 
     [Fact]
@@ -206,7 +210,8 @@ public sealed class EndToEndOrderFlowTests(AspireAppFixture fixture)
     private sealed record OrderSummaryResponse(Guid OrderId, Guid BrandId, string ExternalOrderId, string SourceChannel, string Status, Guid CorrelationId);
     private sealed record StationResponse(Guid Id, string Code, string Name, string DisplayColor);
     private sealed record KitchenTaskResponse(Guid Id, Guid OrderId, string Status);
-    private sealed record PackingManifestResponse(Guid Id, Guid OrderId, string Status);
+    private sealed record PackingManifestResponse(Guid Id, Guid OrderId, string Status, string PickupCode);
+    private sealed record IssueManifestRequest(string PickupCode);
     private sealed record OrderDetailsResponse(Guid OrderId, string Status, Guid CorrelationId, IReadOnlyList<OrderHistoryResponse> History);
     private sealed record OrderHistoryResponse(string? FromStatus, string ToStatus, string? Reason, Guid CorrelationId, DateTimeOffset CreatedAt);
 }

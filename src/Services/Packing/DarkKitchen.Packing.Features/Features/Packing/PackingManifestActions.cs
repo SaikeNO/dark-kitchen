@@ -15,6 +15,7 @@ public sealed record PackingActionResult(
     PackingActionError Error,
     PackingManifest? Manifest,
     object? IntegrationEvent,
+    object? SecondaryIntegrationEvent,
     string? ErrorMessage);
 
 public static class PackingManifestActions
@@ -28,7 +29,7 @@ public static class PackingManifestActions
         var existing = await LoadManifestByOrderIdAsync(order.OrderId, db, ct);
         if (existing is not null)
         {
-            return new PackingActionResult(PackingActionError.None, existing, null, null);
+            return new PackingActionResult(PackingActionError.None, existing, null, null, null);
         }
 
         var brandId = Guid.TryParse(envelope.BrandId, out var parsedBrandId)
@@ -66,7 +67,7 @@ public static class PackingManifestActions
             ? PackingEventFactory.OrderReadyForPacking(manifest, now)
             : null;
 
-        return new PackingActionResult(PackingActionError.None, manifest, integrationEvent, null);
+        return new PackingActionResult(PackingActionError.None, manifest, integrationEvent, null, null);
     }
 
     public static async Task<PackingActionResult> CompleteItemAsync(
@@ -93,7 +94,7 @@ public static class PackingManifestActions
                     now));
             }
 
-            return new PackingActionResult(PackingActionError.None, null, null, null);
+            return new PackingActionResult(PackingActionError.None, null, null, null, null);
         }
 
         var wasReadyForPacking = manifest.Status == PackingManifestStatus.ReadyForPacking;
@@ -102,18 +103,25 @@ public static class PackingManifestActions
             ? PackingEventFactory.OrderReadyForPacking(manifest, now)
             : null;
 
-        return new PackingActionResult(PackingActionError.None, manifest, integrationEvent, null);
+            return new PackingActionResult(PackingActionError.None, manifest, integrationEvent, null, null);
     }
 
     public static async Task<PackingActionResult> IssueAsync(
         Guid manifestId,
+        string? pickupCode,
         IDbContextOutbox<PackingDbContext> outbox,
         CancellationToken ct)
     {
         var manifest = await LoadManifestByIdAsync(manifestId, outbox.DbContext, ct);
         if (manifest is null)
         {
-            return new PackingActionResult(PackingActionError.NotFound, null, null, null);
+            return new PackingActionResult(PackingActionError.NotFound, null, null, null, null);
+        }
+
+        var expectedPickupCode = PackingEventFactory.PickupCodeFor(manifest.OrderId);
+        if (!string.Equals(pickupCode?.Trim(), expectedPickupCode, StringComparison.OrdinalIgnoreCase))
+        {
+            return new PackingActionResult(PackingActionError.Conflict, manifest, null, null, "Pickup code is invalid.");
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -124,11 +132,12 @@ public static class PackingManifestActions
                 PackingActionError.None,
                 manifest,
                 changed ? PackingEventFactory.OrderReadyForPickup(manifest, now) : null,
+                changed ? PackingEventFactory.OrderCompleted(manifest, now) : null,
                 null);
         }
         catch (InvalidOperationException ex)
         {
-            return new PackingActionResult(PackingActionError.Conflict, manifest, null, ex.Message);
+            return new PackingActionResult(PackingActionError.Conflict, manifest, null, null, ex.Message);
         }
     }
 

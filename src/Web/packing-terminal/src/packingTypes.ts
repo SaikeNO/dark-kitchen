@@ -24,5 +24,6 @@ export interface PackingManifest {
   readonly updatedAt: string;
   readonly readyForPackingAt: string | null;
   readonly issuedAt: string | null;
+  readonly pickupCode: string;
   readonly items: readonly ManifestItem[];
 }

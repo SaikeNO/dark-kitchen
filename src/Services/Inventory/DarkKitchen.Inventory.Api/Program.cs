@@ -24,6 +24,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddInventoryInfrastructure(builder.Configuration);
+builder.Services.AddOperationalAuth();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -32,6 +33,8 @@ await app.Services.InitializeInventoryDatabaseAsync();
 
 app.UseExceptionHandler();
 app.UseCors("inventory-panel");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapInventoryEndpoints();
 

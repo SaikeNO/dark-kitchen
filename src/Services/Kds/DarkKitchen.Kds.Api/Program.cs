@@ -25,6 +25,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddKdsInfrastructure(builder.Configuration);
+builder.Services.AddOperationalAuth();
 builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 
@@ -34,6 +35,8 @@ await app.Services.InitializeKdsDatabaseAsync();
 
 app.UseExceptionHandler();
 app.UseCors("kitchen-app");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapServiceInfoEndpoints();
 app.MapKitchenEndpoints();

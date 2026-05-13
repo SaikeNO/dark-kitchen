@@ -133,6 +133,14 @@ public static class IntegrationEventBusExtensions
             .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.OrderReadyForPickup))
             .UseDurableOutbox();
 
+        options.PublishMessage<IntegrationEventEnvelope<OrderCompleted>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.OrderCompleted))
+            .UseDurableOutbox();
+
+        options.PublishMessage<IntegrationEventEnvelope<OrderCancelled>>()
+            .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.OrderCancelled))
+            .UseDurableOutbox();
+
         options.PublishMessage<IntegrationEventEnvelope<MenuItemChanged>>()
             .ToRabbitExchange(IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.MenuItemChanged))
             .UseDurableOutbox();

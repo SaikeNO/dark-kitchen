@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\DarkKitchen.Testing\DarkKitchen.Testing.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Shared\DarkKitchen.Contracts\DarkKitchen.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Services\Storefront\DarkKitchen.Storefront.Infrastructure\DarkKitchen.Storefront.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

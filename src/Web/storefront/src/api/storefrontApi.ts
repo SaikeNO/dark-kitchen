@@ -77,6 +77,16 @@ export interface CheckoutResponse {
   readonly failureReason: string | null;
 }
 
+export interface StorefrontOrder {
+  readonly orderId: string;
+  readonly brandId: string;
+  readonly status: string;
+  readonly failureReason: string | null;
+  readonly pickupCode: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export interface CustomerForm {
   readonly displayName: string;
   readonly phone: string;
@@ -112,6 +122,13 @@ export function checkout(brandId: string, cartId: string, customer: CustomerForm
     customer,
     mockPaymentResult
   });
+}
+
+export function getOrder(brandId: string, orderId: string, signal?: AbortSignal) {
+  return getJson<StorefrontOrder>(
+    `/api/storefront/orders/${orderId}?brandId=${encodeURIComponent(brandId)}`,
+    signal
+  );
 }
 
 export function login(email: string, password: string) {

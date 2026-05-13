@@ -103,6 +103,21 @@ public sealed class Order
         return MoveTo(OrderStatus.ReadyForPickup, correlationId, now, "Ready for pickup");
     }
 
+    public bool Complete(Guid correlationId, DateTimeOffset now)
+    {
+        return MoveTo(OrderStatus.Completed, correlationId, now, "Order completed");
+    }
+
+    public bool Cancel(string reason, Guid correlationId, DateTimeOffset now)
+    {
+        if (IsTerminal)
+        {
+            return false;
+        }
+
+        return SetStatus(OrderStatus.Cancelled, correlationId, now, RequireNonWhiteSpace(reason, nameof(reason)));
+    }
+
     private bool MoveTo(OrderStatus status, Guid correlationId, DateTimeOffset now, string reason)
     {
         if (IsTerminal || Status >= status)

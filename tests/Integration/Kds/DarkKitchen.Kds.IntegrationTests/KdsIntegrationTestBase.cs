@@ -10,7 +10,9 @@ public abstract class KdsIntegrationTestBase(AspireAppFixture fixture)
     protected async Task<HttpClient> CreateKdsClientAsync()
     {
         await fixture.WaitForHealthyAsync("kds-api");
-        return fixture.CreateHttpClient("kds-api");
+        var client = fixture.CreateHttpClient("kds-api");
+        client.DefaultRequestHeaders.Add("X-DarkKitchen-Role", "Operator");
+        return client;
     }
 
     protected async Task<KdsDbContext> CreateDbContextAsync()

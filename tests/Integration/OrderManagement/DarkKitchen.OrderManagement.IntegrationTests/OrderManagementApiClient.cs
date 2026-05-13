@@ -80,6 +80,14 @@ public sealed class OrderManagementApiClient(HttpClient httpClient) : IDisposabl
         return httpClient.GetAsync($"/api/orders/{orderId}");
     }
 
+    public Task<HttpResponseMessage> CancelOrderAsync(Guid orderId, string? reason = null)
+    {
+        return httpClient.PostAsJsonAsync(
+            $"/api/orders/{orderId}/cancel",
+            new CancelOrderRequest(reason),
+            HttpTestExtensions.JsonOptions);
+    }
+
     public void Dispose()
     {
         httpClient.Dispose();
@@ -165,3 +173,5 @@ public sealed record OrderHistoryResponse(
     string? Reason,
     Guid CorrelationId,
     DateTimeOffset CreatedAt);
+
+public sealed record CancelOrderRequest(string? Reason);

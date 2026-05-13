@@ -9,7 +9,8 @@ public static class KitchenEndpoints
 {
     public static IEndpointRouteBuilder MapKitchenEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/kitchen");
+        var group = app.MapGroup("/api/kitchen")
+            .RequireAuthorization("ops.operator");
 
         group.MapGet("/stations", ListStationsAsync);
         group.MapGet("/stations/{stationId:guid}/tasks", ListStationTasksAsync);

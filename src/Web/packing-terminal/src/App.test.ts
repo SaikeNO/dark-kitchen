@@ -56,6 +56,7 @@ function manifest(
     updatedAt: `2026-05-13T00:00:0${id.length}Z`,
     readyForPackingAt: null,
     issuedAt: null,
+    pickupCode: `PU-${id}`,
     items: []
   };
 }

@@ -109,6 +109,39 @@ public sealed class WarehouseItem
         UpdatedAt = now;
     }
 
+    public void Release(decimal quantity, DateTimeOffset now)
+    {
+        if (quantity <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(quantity), quantity, "Release quantity must be positive.");
+        }
+
+        if (ReservedQuantity < quantity)
+        {
+            throw new InvalidOperationException("Reserved quantity cannot go below zero.");
+        }
+
+        ReservedQuantity -= quantity;
+        UpdatedAt = now;
+    }
+
+    public void ConsumeReserved(decimal quantity, DateTimeOffset now)
+    {
+        if (quantity <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(quantity), quantity, "Consumption quantity must be positive.");
+        }
+
+        if (ReservedQuantity < quantity || OnHandQuantity < quantity)
+        {
+            throw new InvalidOperationException("Insufficient reserved quantity to consume.");
+        }
+
+        ReservedQuantity -= quantity;
+        OnHandQuantity -= quantity;
+        UpdatedAt = now;
+    }
+
     private static string RequireNonWhiteSpace(string value, string parameterName)
     {
         if (string.IsNullOrWhiteSpace(value))

@@ -44,6 +44,28 @@ public sealed class StockReservation
         };
     }
 
+    public bool Release()
+    {
+        if (Status != StockReservationStatus.Reserved)
+        {
+            return false;
+        }
+
+        Status = StockReservationStatus.Released;
+        return true;
+    }
+
+    public bool Consume()
+    {
+        if (Status != StockReservationStatus.Reserved)
+        {
+            return false;
+        }
+
+        Status = StockReservationStatus.Consumed;
+        return true;
+    }
+
     private static Guid RequireOrderId(Guid orderId)
     {
         return orderId == Guid.Empty

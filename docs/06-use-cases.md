@@ -117,9 +117,9 @@ Serwis obsluguje publiczny sklep klienta. Ma lokalne read modele katalogu, koszy
 
 | Kierunek | Elementy |
 | --- | --- |
-| HTTP | `/api/storefront/brands`, `/api/storefront/context`, `/api/storefront/menu`, `/api/storefront/auth/*`, `/api/storefront/carts`, `/api/storefront/checkout` |
+| HTTP | `/api/storefront/brands`, `/api/storefront/context`, `/api/storefront/menu`, `/api/storefront/auth/*`, `/api/storefront/carts`, `/api/storefront/checkout`, `/api/storefront/orders`, `/api/storefront/orders/{orderId}` |
 | UI | `src/Web/storefront` |
-| Konsumuje | `brand.changed`, `category.changed`, `menu.item_changed`, `product.price_changed` |
+| Konsumuje | `brand.changed`, `category.changed`, `menu.item_changed`, `product.price_changed`, `inventory.reservation_failed`, `order.accepted`, `item.preparation_started`, `order.ready_for_packing`, `order.ready_for_pickup`, `order.completed` |
 | Zaleznosci | Order Management przez `OrderManagement__BaseUrl` dla checkoutu. |
 
 ### Use case'y
@@ -142,14 +142,13 @@ Serwis obsluguje publiczny sklep klienta. Ma lokalne read modele katalogu, koszy
 | UC-SF-014 | Synchronizacja produktu i ceny | `menu.item_changed`, `product.price_changed` | event-driven | zaimplementowany | `Features/Catalog/MenuItemChangedHandler.cs`, `ProductPriceChangedHandler.cs` |
 | UC-SF-015 | UI sklepu: wybor marki, koszyk, checkout, konto | `storefront` | ui-workflow | zaimplementowany | `src/Web/storefront/src/App.tsx` |
 | UC-SF-016 | Info serwisu | `GET /`, `GET /api/info` | technical | zaimplementowany | `Features/ServiceInfo/ServiceInfoEndpoints.cs` |
+| UC-SF-017 | Status i historia zamowien klienta | `GET /api/storefront/orders`, lifecycle eventy | query/event-driven/ui-workflow | zaimplementowany | `Features/Orders/*`, `src/Web/storefront/src/App.tsx` |
 
 ### Luki
 
 | Obszar | Luka |
 | --- | --- |
-| Status zamowienia klienta | Topologia subskrybuje `inventory.reservation_failed`, `order.accepted`, `order.ready_for_pickup`, ale w serwisie widac handlery tylko dla katalogu. |
 | Platnosci | Checkout uzywa mock wyniku platnosci; realny provider jest poza obecnym zakresem. |
-| Historia zamowien klienta | Brak endpointow do listy/podgladu zamowien klienta po checkout. |
 
 ## Order Management Service
 
@@ -161,9 +160,9 @@ Serwis przyjmuje zamowienia ze sklepu i integracji delivery, zapisuje je, publik
 
 | Kierunek | Elementy |
 | --- | --- |
-| HTTP | `/api/orders/storefront`, `/api/mock-delivery/webhooks/orders`, `/api/orders/{orderId}` |
-| Konsumuje | `inventory.reserved`, `inventory.reservation_failed`, `menu.item_changed`, `product.price_changed`, `item.preparation_started`, `order.ready_for_packing`, `order.ready_for_pickup` |
-| Publikuje | `order.placed`, `order.accepted` |
+| HTTP | `/api/orders/storefront`, `/api/mock-delivery/webhooks/orders`, `/api/orders/{orderId}`, `/api/orders/{orderId}/cancel` |
+| Konsumuje | `inventory.reserved`, `inventory.reservation_failed`, `menu.item_changed`, `product.price_changed`, `item.preparation_started`, `order.ready_for_packing`, `order.ready_for_pickup`, `order.completed` |
+| Publikuje | `order.placed`, `order.accepted`, `order.cancelled` |
 
 ### Use case'y
 
@@ -182,6 +181,8 @@ Serwis przyjmuje zamowienia ze sklepu i integracji delivery, zapisuje je, publik
 | UC-OMS-011 | Oznaczenie gotowosci do pakowania | `order.ready_for_packing` | event-driven | zaimplementowany | `Features/Progress/OrderReadyForPackingHandler.cs` |
 | UC-OMS-012 | Oznaczenie gotowosci do odbioru | `order.ready_for_pickup` | event-driven | zaimplementowany | `Features/Progress/OrderReadyForPickupHandler.cs` |
 | UC-OMS-013 | Info serwisu | `GET /`, `GET /api/info` | technical | zaimplementowany | `Features/ServiceInfo/ServiceInfoEndpoints.cs` |
+| UC-OMS-014 | Anulowanie zamowienia | `POST /api/orders/{orderId}/cancel` | command/event-driven | zaimplementowany | `Features/Orders/CancelOrderEndpoint.cs` |
+| UC-OMS-015 | Finalizacja zamowienia | `order.completed` | event-driven | zaimplementowany | `Features/Progress/OrderCompletedHandler.cs` |
 
 ### Stany zamowienia
 
@@ -193,13 +194,12 @@ Serwis przyjmuje zamowienia ze sklepu i integracji delivery, zapisuje je, publik
 | `Preparing` | `item.preparation_started`. |
 | `ReadyForPacking` | `order.ready_for_packing`. |
 | `ReadyForPickup` | `order.ready_for_pickup`. |
+| `Completed` | `order.completed`. |
 
 ### Luki
 
 | Obszar | Luka |
 | --- | --- |
-| Anulowanie | Brak publicznego use case'a anulowania zamowienia. |
-| Completed | Dokumentacja domenowa mowi o `Completed`, ale obecne przeplywy koncza sie na `ReadyForPickup`. |
 | Real delivery adapters | Jest mock delivery; realne adaptery sa planowane w dokumentacji integracji. |
 
 ## Inventory Service
@@ -214,7 +214,7 @@ Serwis przechowuje stan magazynu, snapshoty receptur i rezerwuje skladniki pod z
 | --- | --- |
 | HTTP | `/api/admin/inventory/items`, `/api/admin/inventory/shortages`, `/api/admin/inventory/items/{ingredientId}/delivery`, `/api/admin/inventory/items/{ingredientId}/adjustment` |
 | UI | `src/Web/inventory-panel` |
-| Konsumuje | `order.placed`, `recipe.changed` |
+| Konsumuje | `order.placed`, `recipe.changed`, `order.cancelled`, `order.completed` |
 | Publikuje | `inventory.reserved`, `inventory.reservation_failed` |
 
 ### Use case'y
@@ -231,14 +231,14 @@ Serwis przechowuje stan magazynu, snapshoty receptur i rezerwuje skladniki pod z
 | UC-INV-008 | Publikacja bledu rezerwacji | brak receptury albo skladnika | event-driven | zaimplementowany | `Application/InventoryReasonCodes.cs`, `OrderPlacedHandler.cs` |
 | UC-INV-009 | Panel magazynu: filtrowanie, dostawy, korekty | `inventory-panel` | ui-workflow | zaimplementowany | `src/Web/inventory-panel/src/App.tsx` |
 | UC-INV-010 | Info serwisu | `GET /`, `GET /api/info` | technical | zaimplementowany | `Features/ServiceInfo/ServiceInfoEndpoints.cs` |
+| UC-INV-011 | Zwolnienie rezerwacji po anulowaniu | `order.cancelled` | event-driven | zaimplementowany | `Features/Orders/ReservationLifecycleHandlers.cs` |
+| UC-INV-012 | Rozchod zarezerwowanego stanu po finalizacji | `order.completed` | event-driven | zaimplementowany | `Features/Orders/ReservationLifecycleHandlers.cs` |
 
 ### Luki
 
 | Obszar | Luka |
 | --- | --- |
-| Zwolnienie rezerwacji | Brak widocznego use case'a cofania rezerwacji po anulowaniu/odrzuceniu pozniejszego etapu. |
-| Zuzycie po wydaniu | Brak osobnego use case'a finalnego rozchodu magazynowego po odbiorze. |
-| Autoryzacja admin inventory | Endpointy admin inventory nie maja widocznego `RequireAuthorization` w route group. |
+| Autoryzacja admin inventory | Endpointy chronione operacyjna polityka `ops.operator`; docelowo mozna podpiac wspolne Identity pracownicze. |
 
 ## KDS Service
 
@@ -277,7 +277,7 @@ Serwis buduje zadania kuchenne z zaakceptowanych zamowien, wyswietla je na stacj
 | --- | --- |
 | Brak routingu | Zadania moga powstac jako routing missing; brakuje UI/operacji naprawczej po stronie KDS. |
 | Przypisanie kucharza | Brak identyfikacji pracownika startujacego/konczacego zadanie. |
-| Autoryzacja kuchni | Endpointy kuchenne nie maja widocznej autoryzacji. |
+| Autoryzacja kuchni | Endpointy chronione operacyjna polityka `ops.operator`; docelowo mozna podpiac wspolne Identity pracownicze. |
 
 ## Packing Service
 
@@ -303,8 +303,8 @@ Serwis tworzy manifest pakowania, sledzi kompletowanie pozycji po zdarzeniach z 
 | UC-PACK-002 | Oznaczenie pozycji jako gotowej | `item.preparation_completed` | event-driven | zaimplementowany | `Features/Packing/ItemPreparationCompletedHandler.cs` |
 | UC-PACK-003 | Publikacja gotowosci do pakowania | wszystkie pozycje gotowe | event-driven | zaimplementowany | `Features/Packing/PackingManifestActions.cs` |
 | UC-PACK-004 | Lista aktywnych manifestow | `GET /api/packing/manifests` | query | zaimplementowany | `Features/Packing/PackingEndpoints.cs` |
-| UC-PACK-005 | Wydanie manifestu | `POST /api/packing/manifests/{manifestId}/issued` | command | zaimplementowany | `Features/Packing/PackingEndpoints.cs` |
-| UC-PACK-006 | Publikacja gotowosci do odbioru | wydanie manifestu | event-driven | zaimplementowany | `Application/PackingEventFactory.cs` |
+| UC-PACK-005 | Wydanie manifestu z walidacja kodu odbioru | `POST /api/packing/manifests/{manifestId}/issued` | command | zaimplementowany | `Features/Packing/PackingEndpoints.cs` |
+| UC-PACK-006 | Publikacja gotowosci do odbioru i finalizacji | wydanie manifestu | event-driven | zaimplementowany | `Application/PackingEventFactory.cs` |
 | UC-PACK-007 | Powiadomienie terminala o zmianie manifestu | SignalR | event-driven | zaimplementowany | `Features/Packing/PackingManifestNotifier.cs`, `PackingHub.cs` |
 | UC-PACK-008 | Terminal wydawki: kolumny manifestow i wydanie | `packing-terminal` | ui-workflow | zaimplementowany | `src/Web/packing-terminal/src/App.tsx` |
 | UC-PACK-009 | Info serwisu | `GET /`, `GET /api/info` | technical | zaimplementowany | `Features/ServiceInfo/ServiceInfoEndpoints.cs` |
@@ -314,8 +314,7 @@ Serwis tworzy manifest pakowania, sledzi kompletowanie pozycji po zdarzeniach z 
 | Obszar | Luka |
 | --- | --- |
 | Czesc wydania | Brak osobnego use case'a czesciowego wydania albo cofniecia wydania. |
-| Kurier/odbiorca | `order.ready_for_pickup` ma `PickupCode`, ale brak UI procesu walidacji kuriera. |
-| Autoryzacja wydawki | Endpointy packing nie maja widocznej autoryzacji. |
+| Autoryzacja wydawki | Endpointy chronione operacyjna polityka `ops.operator`; docelowo mozna podpiac wspolne Identity pracownicze. |
 
 ## Macierz pokrycia
 
@@ -333,9 +332,9 @@ Serwis tworzy manifest pakowania, sledzi kompletowanie pozycji po zdarzeniach z 
 
 | ID | Serwis | Brak | Ryzyko | Proponowana akcja |
 | --- | --- | --- | --- | --- |
-| GAP-001 | Storefront | Status i historia zamowienia klienta | Klient nie widzi postepu po checkout. | Dodac endpoint/read model statusu zamowienia i handlery zdarzen lifecycle. |
-| GAP-002 | Inventory | Zwolnienie rezerwacji i finalny rozchod | Rezerwacje moga zostawac po anulowaniu albo wydaniu. | Zaprojektowac zdarzenia kompensacji i konsumpcji magazynu. |
-| GAP-003 | OrderManagement | Anulowanie i finalne `Completed` | Cykl zycia nie jest domkniety biznesowo. | Dodac command anulowania i przejscie finalne po odbiorze. |
+| GAP-001 | Storefront | Real-time status zamowienia | Klient widzi polling statusu, ale brak SignalR/push. | Dodac push statusu klienta, jesli UX bedzie tego wymagal. |
+| GAP-002 | Inventory | Rezerwacje po odrzuceniu pozniejszego etapu | Obecnie obslugiwane anulowanie i completed; brak osobnego eventu reject po akceptacji. | Dodac zdarzenie kompensacji, gdy pojawi sie odrzucenie po rezerwacji. |
+| GAP-003 | OrderManagement | Produkcyjne potwierdzenie odbioru | `Completed` przychodzi z terminala packing; brak realnego adaptera kuriera. | Podpiac realny proces odbioru w integracjach delivery. |
 | GAP-004 | KDS | Naprawa brakujacego routingu | Zamowienie moze nie trafic na stacje. | Dodac widok/operacje routing missing albo blokade publikacji menu bez routingu. |
-| GAP-005 | Packing | Walidacja odbiorcy/kuriera | Wydanie jest za proste dla realnej operacji. | Dodac proces skanu kodu/potwierdzenia kuriera. |
-| GAP-006 | Admin/KDS/Packing/Inventory | Spojna autoryzacja operacyjna | Operacje pracownicze moga byc publiczne w dev API. | Ujednolicic policy per aplikacja i opisac role. |
+| GAP-005 | Packing | Czesc wydania/cofniecie wydania | Brak procedury korekty po pomylce na wydawce. | Dodac command cofniecia albo reklamacji operacyjnej. |
+| GAP-006 | Admin/KDS/Packing/Inventory | Produkcyjne Identity operacyjne | Jest wspolna polityka naglowkowa dla paneli operacyjnych. | Zastapic ja docelowym SSO/Identity dla pracownikow. |

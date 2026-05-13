@@ -24,6 +24,16 @@ public static class PackingEventFactory
             now);
     }
 
+    public static IntegrationEventEnvelope<OrderCompleted> OrderCompleted(
+        PackingManifest manifest,
+        DateTimeOffset now)
+    {
+        return CreateEnvelope(
+            manifest,
+            new OrderCompleted(manifest.OrderId),
+            now);
+    }
+
     public static string PickupCodeFor(Guid orderId)
     {
         return $"PU-{orderId:N}"[..11].ToUpperInvariant();

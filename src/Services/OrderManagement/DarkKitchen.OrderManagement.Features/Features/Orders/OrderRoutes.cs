@@ -7,6 +7,7 @@ public static class OrderRoutes
         app.MapPost("/api/orders/storefront", CreateStorefrontOrderEndpoint.HandleAsync);
         app.MapPost("/api/mock-delivery/webhooks/orders", CreateMockDeliveryOrderEndpoint.HandleAsync);
         app.MapGet("/api/orders/{orderId:guid}", GetOrderEndpoint.HandleAsync);
+        app.MapPost("/api/orders/{orderId:guid}/cancel", CancelOrderEndpoint.HandleAsync);
 
         return app;
     }

@@ -11,7 +11,9 @@ public abstract class InventoryIntegrationTestBase(AspireAppFixture fixture)
     protected async Task<HttpClient> CreateInventoryClientAsync()
     {
         await fixture.WaitForHealthyAsync("inventory-api");
-        return fixture.CreateHttpClient("inventory-api");
+        var client = fixture.CreateHttpClient("inventory-api");
+        client.DefaultRequestHeaders.Add("X-DarkKitchen-Role", "Operator");
+        return client;
     }
 
     protected async Task<CatalogApiClient> CreateCatalogManagerClientAsync()

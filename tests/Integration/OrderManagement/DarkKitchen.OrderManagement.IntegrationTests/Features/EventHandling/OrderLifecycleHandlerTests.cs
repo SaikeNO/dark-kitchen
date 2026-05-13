@@ -77,11 +77,19 @@ public sealed class OrderLifecycleHandlerTests(AspireAppFixture fixture) : Order
             Envelope(new OrderReadyForPickup(order.Id, "A-42")),
             db,
             CancellationToken.None);
+        await OrderCompletedHandler.Handle(
+            Envelope(new OrderCompleted(order.Id)),
+            db,
+            CancellationToken.None);
+        await OrderCompletedHandler.Handle(
+            Envelope(new OrderCompleted(order.Id)),
+            db,
+            CancellationToken.None);
 
         db.ChangeTracker.Clear();
         var saved = await db.Orders.Include(entity => entity.History).SingleAsync(entity => entity.Id == order.Id);
-        Assert.Equal(OrderStatus.ReadyForPickup, saved.Status);
-        Assert.Equal(5, saved.History.Count);
+        Assert.Equal(OrderStatus.Completed, saved.Status);
+        Assert.Equal(6, saved.History.Count);
     }
 
     [Fact]

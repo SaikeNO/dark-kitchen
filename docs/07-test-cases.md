@@ -85,8 +85,8 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 | TC-CAT-029-02 | UC-CAT-029 | Nieznany plik. | `GET /uploads/{kind}/{fileName}`. | Zwraca 404. | istnieje |
 | TC-CAT-030-01 | UC-CAT-030 | Aktywna marka z menu. | `GET /api/menu/brands/{brandId}`. | Zwraca publiczne menu bez danych admin. | istnieje |
 | TC-CAT-030-02 | UC-CAT-030 | Nieznana marka. | `GET /api/menu/brands/{brandId}`. | Zwraca 404. | istnieje |
-| TC-CAT-031-01 | UC-CAT-031 | Manager w panelu. | Przejscie przez marki, menu, receptury, skladniki, stacje. | UI laduje dane i wysyla poprawne mutacje. | do dodania |
-| TC-CAT-031-02 | UC-CAT-031 | Operator w panelu. | Proba wejscia w akcje zapisu. | UI blokuje albo backend zwraca 403. | do dodania |
+| TC-CAT-031-01 | UC-CAT-031 | Manager w panelu. | Przejscie przez marki, menu, receptury, skladniki, stacje. | UI laduje dane i wysyla poprawne mutacje. | istnieje |
+| TC-CAT-031-02 | UC-CAT-031 | Operator w panelu. | Proba wejscia w akcje zapisu. | UI blokuje albo backend zwraca 403. | istnieje |
 | TC-CAT-032-01 | UC-CAT-032 | Serwis uruchomiony. | `GET /`, `GET /api/info`. | Zwraca status i odpowiedzialnosci. | istnieje |
 
 ## Storefront Service
@@ -124,6 +124,9 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 | TC-SF-015-01 | UC-SF-015 | Sklep w przegladarce. | Wybor marki, dodanie produktu, checkout. | UI wykonuje pelny przeplyw. | do dodania |
 | TC-SF-015-02 | UC-SF-015 | Sesja klienta. | Rejestracja, logowanie, logout w dialogu. | UI aktualizuje stan sesji. | do dodania |
 | TC-SF-016-01 | UC-SF-016 | Serwis uruchomiony. | `GET /`, `GET /api/info`. | Zwraca status i odpowiedzialnosci. | istnieje |
+| TC-SF-017-01 | UC-SF-017 | Checkout success utworzyl lokalny read model. | `GET /api/storefront/orders/{orderId}`. | Zwraca order klienta ze statusem `Placed`. | istnieje |
+| TC-SF-017-02 | UC-SF-017 | Przychodza eventy lifecycle. | Handlery `order.accepted`, `order.ready_for_pickup`, `order.completed`. | Read model statusu przechodzi do najnowszego stanu i zachowuje pickup code. | istnieje |
+| TC-SF-017-03 | UC-SF-017 | Storefront UI po checkout. | Polling statusu zamowienia. | UI pokazuje aktualny status zamowienia klienta. | istnieje |
 
 ## Order Management Service
 
@@ -156,6 +159,9 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 | TC-OMS-012-01 | UC-OMS-012 | Order w toku, `order.ready_for_pickup`. | Handler. | Status `ReadyForPickup`. | istnieje |
 | TC-OMS-012-02 | UC-OMS-012 | Event powtorzony. | Handler. | Brak duplikacji historii albo brak cofania statusu. | do dodania |
 | TC-OMS-013-01 | UC-OMS-013 | Serwis uruchomiony. | `GET /`, `GET /api/info`. | Zwraca status i odpowiedzialnosci. | istnieje |
+| TC-OMS-014-01 | UC-OMS-014 | Order nieterminalny. | `POST /api/orders/{orderId}/cancel`. | Status `Cancelled`, historia dopisana i publikuje `order.cancelled`. | istnieje |
+| TC-OMS-014-02 | UC-OMS-014 | Order terminalny. | `POST /api/orders/{orderId}/cancel`. | Zwraca conflict bez zmiany statusu. | do dodania |
+| TC-OMS-015-01 | UC-OMS-015 | Order po wydaniu. | Handler `order.completed`. | Status `Completed`, historia dopisana, brak cofania po powtorce. | istnieje |
 
 ## Inventory Service
 
@@ -181,6 +187,8 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 | TC-INV-009-01 | UC-INV-009 | Panel magazynu otwarty. | Filtrowanie, dostawa, korekta. | UI odswieza liste i pokazuje zmienione wartosci. | do dodania |
 | TC-INV-009-02 | UC-INV-009 | Blad API. | Akcja w panelu. | UI pokazuje komunikat bledu bez utraty stanu. | do dodania |
 | TC-INV-010-01 | UC-INV-010 | Serwis uruchomiony. | `GET /`, `GET /api/info`. | Zwraca status i odpowiedzialnosci. | istnieje |
+| TC-INV-011-01 | UC-INV-011 | Istnieje rezerwacja orderu. | Handler `order.cancelled`. | Reserved wraca do available, status rezerwacji `Released`, log dopisany. | istnieje |
+| TC-INV-012-01 | UC-INV-012 | Istnieje rezerwacja orderu. | Handler `order.completed`. | On hand i reserved maleja, status rezerwacji `Consumed`, log dopisany. | istnieje |
 
 ## KDS Service
 
@@ -220,10 +228,10 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 | TC-PACK-003-02 | UC-PACK-003 | Tylko czesc pozycji gotowa. | Handler. | Nie publikuje `order.ready_for_packing`. | istnieje |
 | TC-PACK-004-01 | UC-PACK-004 | Sa manifesty nie wydane. | `GET /api/packing/manifests`. | Zwraca aktywne manifesty z licznikami i statusem opoznienia. | czesciowo |
 | TC-PACK-004-02 | UC-PACK-004 | Manifest `Issued`. | `GET /api/packing/manifests`. | Nie zwraca wydanego manifestu. | do dodania |
-| TC-PACK-005-01 | UC-PACK-005 | Manifest `ReadyForPacking`. | `POST /api/packing/manifests/{manifestId}/issued`. | Status `Issued`, zwraca manifest, wysyla SignalR. | istnieje |
-| TC-PACK-005-02 | UC-PACK-005 | Manifest niegotowy. | `POST /api/packing/manifests/{manifestId}/issued`. | Zwraca conflict. | do dodania |
+| TC-PACK-005-01 | UC-PACK-005 | Manifest `ReadyForPacking`, poprawny pickup code. | `POST /api/packing/manifests/{manifestId}/issued`. | Status `Issued`, zwraca manifest, wysyla SignalR. | istnieje |
+| TC-PACK-005-02 | UC-PACK-005 | Manifest niegotowy albo zly pickup code. | `POST /api/packing/manifests/{manifestId}/issued`. | Zwraca conflict. | do dodania |
 | TC-PACK-005-03 | UC-PACK-005 | Nieznany manifest. | `POST /api/packing/manifests/{manifestId}/issued`. | Zwraca 404. | do dodania |
-| TC-PACK-006-01 | UC-PACK-006 | Manifest wydany. | Publikacja wyniku. | Publikuje `order.ready_for_pickup` z pickup code. | istnieje |
+| TC-PACK-006-01 | UC-PACK-006 | Manifest wydany. | Publikacja wyniku. | Publikuje `order.ready_for_pickup` z pickup code i `order.completed`. | istnieje |
 | TC-PACK-007-01 | UC-PACK-007 | Klient SignalR terminala podlaczony. | Zmiana manifestu. | Terminal dostaje update manifestu. | do dodania |
 | TC-PACK-008-01 | UC-PACK-008 | Packing terminal otwarty. | Lista, refresh, issue. | UI grupuje manifesty i aktualizuje status po akcji. | do dodania |
 | TC-PACK-008-02 | UC-PACK-008 | SignalR offline. | Terminal dziala z HTTP refresh. | Pokazuje status polaczenia i pozwala odswiezyc. | do dodania |
@@ -238,8 +246,8 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 | TC-E2E-003 | FLOW-001 | Obca marka. | Pobranie menu storefront. | Nie ujawnia danych innej marki. | istnieje |
 | TC-E2E-004 | FLOW-002 | Manager zmienia recepture w Catalog. | Upsert recipe. | Inventory odbiera `recipe.changed` i aktualizuje snapshot. | istnieje |
 | TC-E2E-005 | FLOW-005 | Mock delivery order. | Webhook mock delivery, potem caly lifecycle. | Order trafia do inventory, KDS, packing. | do dodania |
-| TC-E2E-006 | FLOW-006 | Zadanie KDS zakonczone. | `done` na ostatniej pozycji. | Packing publikuje `order.ready_for_packing`, OMS aktualizuje status. | czesciowo |
-| TC-E2E-007 | FLOW-007 | Manifest gotowy. | Issue manifest. | OMS widzi `ReadyForPickup`. | czesciowo |
+| TC-E2E-006 | FLOW-006 | Zadanie KDS zakonczone. | `done` na ostatniej pozycji. | Packing publikuje `order.ready_for_packing`, OMS aktualizuje status. | istnieje |
+| TC-E2E-007 | FLOW-007 | Manifest gotowy. | Issue manifest z pickup code. | OMS widzi `Completed`. | istnieje |
 
 ## Kontrakty i testy techniczne
 
@@ -255,8 +263,8 @@ Dokument mapuje test case'y na use case'y z `docs/06-use-cases.md`. To backlog i
 
 | Priorytet | Testy |
 | --- | --- |
-| P1 | Brakujace testy auth dla Inventory, KDS i Packing; brakujace testy statusu Storefront po eventach lifecycle. |
-| P1 | Testy `Storefront` handlerow `inventory.reservation_failed`, `order.accepted`, `order.ready_for_pickup`, jesli zostana zaimplementowane. |
+| P1 | Brakujace negatywne testy auth dla Inventory, KDS i Packing: brak naglowka `X-DarkKitchen-Role` oraz zla rola. |
+| P1 | Dodatkowe testy `Storefront` handlerow `inventory.reservation_failed` i `item.preparation_started`. |
 | P2 | UI E2E dla `admin-panel`, `storefront`, `inventory-panel`, `kitchen-app`, `packing-terminal`. |
 | P2 | Idempotencja eventow w OMS, KDS i Packing tam, gdzie obecnie jest tylko czesciowe pokrycie. |
 | P3 | Edge cases uploadow assetow i pustych list w query endpointach. |

@@ -9,7 +9,8 @@ public static class PackingEndpoints
 {
     public static IEndpointRouteBuilder MapPackingEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/packing");
+        var group = app.MapGroup("/api/packing")
+            .RequireAuthorization("ops.operator");
 
         group.MapGet("/manifests", ListManifestsAsync);
         group.MapPost("/manifests/{manifestId:guid}/issued", IssueManifestAsync);
@@ -34,11 +35,12 @@ public static class PackingEndpoints
 
     private static async Task<IResult> IssueManifestAsync(
         Guid manifestId,
+        IssueManifestRequest request,
         IDbContextOutbox<PackingDbContext> outbox,
         IHubContext<PackingHub> hub,
         CancellationToken ct)
     {
-        var result = await PackingManifestActions.IssueAsync(manifestId, outbox, ct);
+        var result = await PackingManifestActions.IssueAsync(manifestId, request.PickupCode, outbox, ct);
         if (result.Error == PackingActionError.NotFound)
         {
             return Results.NotFound();
@@ -52,6 +54,7 @@ public static class PackingEndpoints
         }
 
         await OrderAcceptedHandler.PublishAsync(result.IntegrationEvent, outbox);
+        await OrderAcceptedHandler.PublishAsync(result.SecondaryIntegrationEvent, outbox);
         await outbox.SaveChangesAndFlushMessagesAsync(ct);
         await PackingManifestNotifier.NotifyManifestChangedAsync(hub, result.Manifest!, ct);
 

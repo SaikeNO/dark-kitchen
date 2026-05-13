@@ -25,6 +25,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddPackingInfrastructure(builder.Configuration);
+builder.Services.AddOperationalAuth();
 builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 
@@ -34,6 +35,8 @@ await app.Services.InitializePackingDatabaseAsync();
 
 app.UseExceptionHandler();
 app.UseCors("packing-terminal");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapServiceInfoEndpoints();
 app.MapPackingEndpoints();

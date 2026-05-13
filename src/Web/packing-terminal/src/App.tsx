@@ -80,7 +80,7 @@ export function App() {
             manifests={groups.delayed}
             emptyText="Brak opoznionych manifestow"
             issuePending={issueMutation.isPending}
-            onIssue={manifest => issueMutation.mutate(manifest.id)}
+            onIssue={manifest => issueMutation.mutate({ manifestId: manifest.id, pickupCode: manifest.pickupCode })}
           />
           <ManifestColumn
             title={`Gotowe (${groups.ready.length})`}
@@ -88,7 +88,7 @@ export function App() {
             manifests={groups.ready}
             emptyText="Nic nie czeka na wydanie"
             issuePending={issueMutation.isPending}
-            onIssue={manifest => issueMutation.mutate(manifest.id)}
+            onIssue={manifest => issueMutation.mutate({ manifestId: manifest.id, pickupCode: manifest.pickupCode })}
           />
           <ManifestColumn
             title={`Kompletacja (${groups.waiting.length})`}
@@ -96,7 +96,7 @@ export function App() {
             manifests={groups.waiting}
             emptyText="Brak manifestow w toku"
             issuePending={issueMutation.isPending}
-            onIssue={manifest => issueMutation.mutate(manifest.id)}
+            onIssue={manifest => issueMutation.mutate({ manifestId: manifest.id, pickupCode: manifest.pickupCode })}
           />
         </section>
       )}
@@ -172,6 +172,10 @@ function ManifestCard({
       </div>
 
       <ul className="item-list">
+        <li className="ready">
+          <span>Kod odbioru</span>
+          <strong>{manifest.pickupCode}</strong>
+        </li>
         {manifest.items.map(item => (
           <li key={item.id} className={item.isReady ? "ready" : "waiting"}>
             <span>{item.itemName}</span>

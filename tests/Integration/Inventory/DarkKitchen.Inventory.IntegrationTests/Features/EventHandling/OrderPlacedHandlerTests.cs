@@ -85,6 +85,39 @@ public sealed class OrderPlacedHandlerTests(AspireAppFixture fixture) : Inventor
         Assert.Equal(1, await assertDb.StockReservations.CountAsync(reservation => orderIds.Contains(reservation.OrderId) && reservation.Status == StockReservationStatus.Failed));
     }
 
+    [Fact]
+    public async Task CancelledOrderReleasesReservedStock()
+    {
+        await using var db = await CreateDbContextAsync();
+        var scenario = await SeedReservationScenarioAsync(db, onHandQuantity: 10, recipeQuantity: 2);
+        var orderId = Guid.NewGuid();
+        await OrderPlacedHandler.ReserveAsync(CreateOrder(orderId, scenario.ProductId, quantity: 2), db, CancellationToken.None);
+
+        await ReservationLifecycleHandlers.ApplyAsync(orderId, db, ReservationAction.Release, CancellationToken.None);
+
+        var item = await db.WarehouseItems.AsNoTracking().SingleAsync(entity => entity.Id == scenario.IngredientId);
+        var reservation = await db.StockReservations.AsNoTracking().SingleAsync(entity => entity.OrderId == orderId);
+        Assert.Equal(0, item.ReservedQuantity);
+        Assert.Equal(StockReservationStatus.Released, reservation.Status);
+    }
+
+    [Fact]
+    public async Task CompletedOrderConsumesReservedStock()
+    {
+        await using var db = await CreateDbContextAsync();
+        var scenario = await SeedReservationScenarioAsync(db, onHandQuantity: 10, recipeQuantity: 2);
+        var orderId = Guid.NewGuid();
+        await OrderPlacedHandler.ReserveAsync(CreateOrder(orderId, scenario.ProductId, quantity: 2), db, CancellationToken.None);
+
+        await ReservationLifecycleHandlers.ApplyAsync(orderId, db, ReservationAction.Consume, CancellationToken.None);
+
+        var item = await db.WarehouseItems.AsNoTracking().SingleAsync(entity => entity.Id == scenario.IngredientId);
+        var reservation = await db.StockReservations.AsNoTracking().SingleAsync(entity => entity.OrderId == orderId);
+        Assert.Equal(6, item.OnHandQuantity);
+        Assert.Equal(0, item.ReservedQuantity);
+        Assert.Equal(StockReservationStatus.Consumed, reservation.Status);
+    }
+
     private async Task<ReservationScenario> SeedReservationScenarioAsync(
         InventoryDbContext db,
         decimal onHandQuantity,

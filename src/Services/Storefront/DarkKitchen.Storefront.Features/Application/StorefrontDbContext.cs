@@ -14,6 +14,7 @@ public sealed class StorefrontDbContext(DbContextOptions<StorefrontDbContext> op
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+    public DbSet<CustomerOrder> CustomerOrders => Set<CustomerOrder>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -112,6 +113,18 @@ public sealed class StorefrontDbContext(DbContextOptions<StorefrontDbContext> op
             entity.Property(payment => payment.FailureReason).HasMaxLength(200);
             entity.HasIndex(payment => payment.BrandId);
             entity.HasIndex(payment => payment.CartId);
+        });
+
+        builder.Entity<CustomerOrder>(entity =>
+        {
+            entity.ToTable("customer_orders", "storefront");
+            entity.HasKey(order => order.OrderId);
+            entity.Property(order => order.Status).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.FailureReason).HasMaxLength(200);
+            entity.Property(order => order.PickupCode).HasMaxLength(32);
+            entity.HasIndex(order => order.BrandId);
+            entity.HasIndex(order => order.UserId);
+            entity.HasIndex(order => order.CreatedAt);
         });
     }
 }

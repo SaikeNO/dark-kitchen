@@ -13,6 +13,7 @@ public sealed record PackingManifestResponse(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? ReadyForPackingAt,
     DateTimeOffset? IssuedAt,
+    string PickupCode,
     IReadOnlyList<ManifestItemResponse> Items)
 {
     public static PackingManifestResponse FromManifest(
@@ -36,6 +37,7 @@ public sealed record PackingManifestResponse(
             manifest.UpdatedAt,
             manifest.ReadyForPackingAt,
             manifest.IssuedAt,
+            PackingEventFactory.PickupCodeFor(manifest.OrderId),
             manifest.Items
                 .OrderBy(item => item.ItemName)
                 .ThenBy(item => item.OrderItemId)
@@ -43,6 +45,8 @@ public sealed record PackingManifestResponse(
                 .ToArray());
     }
 }
+
+public sealed record IssueManifestRequest(string? PickupCode);
 
 public sealed record ManifestItemResponse(
     Guid Id,

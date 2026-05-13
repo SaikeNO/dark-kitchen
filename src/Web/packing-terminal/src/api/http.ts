@@ -22,6 +22,7 @@ interface ApiProblem {
 
 export const http = axios.create({
   baseURL: apiClient.baseUrl.length > 0 ? apiClient.baseUrl : undefined,
+  headers: { "X-DarkKitchen-Role": "Operator" },
   timeout: 10_000,
   withCredentials: true
 });
@@ -48,8 +49,8 @@ export async function getJson<TResponse>(url: string, signal?: AbortSignal) {
   return response.data;
 }
 
-export async function postJson<TResponse>(url: string) {
-  const response = await http.post<TResponse>(url);
+export async function postJson<TResponse>(url: string, data?: unknown) {
+  const response = await http.post<TResponse>(url, data);
   return response.data;
 }
 

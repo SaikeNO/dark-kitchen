@@ -10,6 +10,8 @@ public static class KnownIntegrationEventTypes
     public const string ItemPreparationCompleted = "item.preparation_completed";
     public const string OrderReadyForPacking = "order.ready_for_packing";
     public const string OrderReadyForPickup = "order.ready_for_pickup";
+    public const string OrderCompleted = "order.completed";
+    public const string OrderCancelled = "order.cancelled";
     public const string MenuItemChanged = "menu.item_changed";
     public const string ProductPriceChanged = "product.price_changed";
     public const string BrandChanged = "brand.changed";
@@ -28,6 +30,8 @@ public static class KnownIntegrationEventTypes
         ItemPreparationCompleted,
         OrderReadyForPacking,
         OrderReadyForPickup,
+        OrderCompleted,
+        OrderCancelled,
         MenuItemChanged,
         ProductPriceChanged,
         BrandChanged,

@@ -41,6 +41,9 @@ public static class OrderAcceptedHandler
             case IntegrationEventEnvelope<OrderReadyForPickup> readyForPickup:
                 await outbox.PublishAsync(readyForPickup);
                 break;
+            case IntegrationEventEnvelope<OrderCompleted> completed:
+                await outbox.PublishAsync(completed);
+                break;
             case null:
                 break;
             default:

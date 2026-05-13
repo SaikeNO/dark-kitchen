@@ -1,4 +1,5 @@
 using DarkKitchen.Storefront.Features.Features.Carts;
+using System.Security.Claims;
 
 namespace DarkKitchen.Storefront.Features.Features.Checkout;
 
@@ -67,9 +68,22 @@ public static class CheckoutEndpoint
             ct);
 
         payment.MarkSuccess(order.OrderId, DateTimeOffset.UtcNow);
+        db.CustomerOrders.Add(CustomerOrder.Create(
+            order.OrderId,
+            brand.BrandId,
+            UserIdFrom(httpContext.User),
+            cart.Id,
+            payment.Id,
+            DateTimeOffset.UtcNow));
         await db.SaveChangesAsync(ct);
 
         return Results.Ok(new CheckoutResponse(payment.Id, payment.Status.ToString(), order.OrderId, order.CorrelationId, null));
+    }
+
+    private static Guid? UserIdFrom(ClaimsPrincipal principal)
+    {
+        var value = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(value, out var userId) ? userId : null;
     }
 
     private static CheckoutCustomerRequest? NormalizeCustomer(CheckoutCustomerRequest? customer)

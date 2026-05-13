@@ -34,7 +34,9 @@ public static class IntegrationEventTopology
                 DarkKitchenService.Inventory,
                 InventoryQueue,
                 KnownIntegrationEventTypes.OrderPlaced,
-                KnownIntegrationEventTypes.RecipeChanged),
+                KnownIntegrationEventTypes.RecipeChanged,
+                KnownIntegrationEventTypes.OrderCompleted,
+                KnownIntegrationEventTypes.OrderCancelled),
             [DarkKitchenService.Kds] = CreateSubscription(
                 DarkKitchenService.Kds,
                 KdsQueue,
@@ -50,7 +52,8 @@ public static class IntegrationEventTopology
                 KnownIntegrationEventTypes.ProductPriceChanged,
                 KnownIntegrationEventTypes.ItemPreparationStarted,
                 KnownIntegrationEventTypes.OrderReadyForPacking,
-                KnownIntegrationEventTypes.OrderReadyForPickup),
+                KnownIntegrationEventTypes.OrderReadyForPickup,
+                KnownIntegrationEventTypes.OrderCompleted),
             [DarkKitchenService.Packing] = CreateSubscription(
                 DarkKitchenService.Packing,
                 PackingQueue,
@@ -65,7 +68,8 @@ public static class IntegrationEventTopology
                 KnownIntegrationEventTypes.ProductPriceChanged,
                 KnownIntegrationEventTypes.InventoryReservationFailed,
                 KnownIntegrationEventTypes.OrderAccepted,
-                KnownIntegrationEventTypes.OrderReadyForPickup)
+                KnownIntegrationEventTypes.OrderReadyForPickup,
+                KnownIntegrationEventTypes.OrderCompleted)
         };
 
     public static IReadOnlyCollection<IntegrationEventSubscription> Subscriptions { get; } =

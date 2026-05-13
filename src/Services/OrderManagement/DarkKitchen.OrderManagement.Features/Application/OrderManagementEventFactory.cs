@@ -39,4 +39,18 @@ public static class OrderManagementEventFactory
                     .Select(item => new OrderAcceptedLine(item.Id, item.MenuItemId, item.Name, item.Quantity))
                     .ToArray()));
     }
+
+    public static IntegrationEventEnvelope<OrderCancelled> OrderCancelled(
+        Order order,
+        string reason,
+        Guid correlationId)
+    {
+        return IntegrationEventEnvelope.Create(
+            eventId: Guid.NewGuid(),
+            occurredAt: DateTimeOffset.UtcNow,
+            correlationId: correlationId,
+            causationId: null,
+            brandId: order.BrandId.ToString("D"),
+            payload: new OrderCancelled(order.Id, reason));
+    }
 }

@@ -26,3 +26,9 @@ public sealed record OrderReadyForPacking(Guid OrderId);
 public sealed record OrderReadyForPickup(
     Guid OrderId,
     string PickupCode);
+
+public sealed record OrderCompleted(Guid OrderId);
+
+public sealed record OrderCancelled(
+    Guid OrderId,
+    string Reason);

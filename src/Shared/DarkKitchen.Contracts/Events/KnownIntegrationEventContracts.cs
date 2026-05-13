@@ -30,6 +30,12 @@ public static class KnownIntegrationEventContracts
     public static readonly IntegrationEventContract OrderReadyForPickup =
         Create<OrderReadyForPickup>(KnownIntegrationEventTypes.OrderReadyForPickup);
 
+    public static readonly IntegrationEventContract OrderCompleted =
+        Create<OrderCompleted>(KnownIntegrationEventTypes.OrderCompleted);
+
+    public static readonly IntegrationEventContract OrderCancelled =
+        Create<OrderCancelled>(KnownIntegrationEventTypes.OrderCancelled);
+
     public static readonly IntegrationEventContract MenuItemChanged =
         Create<MenuItemChanged>(KnownIntegrationEventTypes.MenuItemChanged);
 
@@ -61,6 +67,8 @@ public static class KnownIntegrationEventContracts
         ItemPreparationCompleted,
         OrderReadyForPacking,
         OrderReadyForPickup,
+        OrderCompleted,
+        OrderCancelled,
         MenuItemChanged,
         ProductPriceChanged,
         BrandChanged,

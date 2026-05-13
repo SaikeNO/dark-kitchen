@@ -23,10 +23,12 @@ import {
   type CustomerForm,
   type MenuProduct,
   type Session,
+  type StorefrontOrder,
   type Theme,
   checkout,
   createCart,
   getMenu,
+  getOrder,
   getSession,
   listBrands,
   login,
@@ -139,7 +141,7 @@ function StorefrontPage({
   const [authOpen, setAuthOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"success" | "failed">("success");
   const [customer, setCustomer] = useState<CustomerForm>(emptyCustomer);
-  const [checkoutResult, setCheckoutResult] = useState<null | { readonly status: string; readonly message: string }>(null);
+  const [checkoutResult, setCheckoutResult] = useState<null | { readonly status: string; readonly message: string; readonly orderId?: string }>(null);
 
   const menuQuery = useQuery({
     queryKey: ["storefront", "menu", brandId],
@@ -154,6 +156,15 @@ function StorefrontPage({
     queryKey: cartKey(brandId),
     queryFn: () => prepareCart(brandId),
     enabled: brandId.length > 0
+  });
+  const orderStatusQuery = useQuery({
+    queryKey: ["storefront", "order", brandId, checkoutResult?.orderId ?? ""],
+    queryFn: ({ signal }) => getOrder(brandId, checkoutResult?.orderId ?? "", signal),
+    enabled: checkoutResult?.orderId !== undefined,
+    refetchInterval: query => {
+      const status = query.state.data?.status;
+      return status === "Completed" || status === "Rejected" ? false : 2_000;
+    }
   });
 
   const menu = menuQuery.data;
@@ -225,7 +236,11 @@ function StorefrontPage({
       const response = await checkoutMutation.mutateAsync();
       if (response.paymentStatus === "Success") {
         await cartMutation.mutateAsync([]);
-        setCheckoutResult({ status: "success", message: `Order ${response.orderId ?? ""}`.trim() });
+        setCheckoutResult({
+          status: "success",
+          message: `Order ${response.orderId ?? ""}`.trim(),
+          orderId: response.orderId ?? undefined
+        });
         return;
       }
 
@@ -313,6 +328,7 @@ function StorefrontPage({
             customer={customer}
             paymentMode={paymentMode}
             checkoutResult={checkoutResult}
+            orderStatus={orderStatusQuery.data ?? null}
             busy={busy}
             onCustomer={setCustomer}
             onPaymentMode={setPaymentMode}
@@ -336,6 +352,7 @@ function StorefrontPage({
             customer={customer}
             paymentMode={paymentMode}
             checkoutResult={checkoutResult}
+            orderStatus={orderStatusQuery.data ?? null}
             busy={busy}
             onCustomer={setCustomer}
             onPaymentMode={setPaymentMode}
@@ -403,6 +420,7 @@ function CheckoutBox({
   customer,
   paymentMode,
   checkoutResult,
+  orderStatus,
   busy,
   onCustomer,
   onPaymentMode,
@@ -413,7 +431,8 @@ function CheckoutBox({
   readonly productsById: ReadonlyMap<string, MenuProduct>;
   readonly customer: CustomerForm;
   readonly paymentMode: "success" | "failed";
-  readonly checkoutResult: null | { readonly status: string; readonly message: string };
+  readonly checkoutResult: null | { readonly status: string; readonly message: string; readonly orderId?: string };
+  readonly orderStatus: StorefrontOrder | null;
   readonly busy: boolean;
   readonly onCustomer: (customer: CustomerForm) => void;
   readonly onPaymentMode: (mode: "success" | "failed") => void;
@@ -451,7 +470,7 @@ function CheckoutBox({
       {checkoutResult !== null && (
         <div className={checkoutResult.status === "success" ? "result success" : "result failed"}>
           {checkoutResult.status === "success" && <CheckCircle2 aria-hidden="true" />}
-          <span>{checkoutResult.message}</span>
+          <span>{orderStatus === null ? checkoutResult.message : orderStatusLabel(orderStatus)}</span>
         </div>
       )}
     </div>
@@ -696,6 +715,12 @@ function cartKey(brandId: string) {
 
 function money(amount: number, currency: string) {
   return new Intl.NumberFormat("pl-PL", { style: "currency", currency }).format(amount);
+}
+
+function orderStatusLabel(order: StorefrontOrder) {
+  const pickup = order.pickupCode === null ? "" : ` Kod: ${order.pickupCode}`;
+  const reason = order.failureReason === null ? "" : ` (${order.failureReason})`;
+  return `Order ${order.orderId.slice(0, 8)}: ${order.status}${pickup}${reason}`;
 }
 
 function storageKey(brandId: string) {

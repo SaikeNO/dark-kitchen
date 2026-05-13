@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DarkKitchen.Storefront.Features.Application;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DarkKitchen.Storefront.Infrastructure.Migrations
 {
     [DbContext(typeof(StorefrontDbContext))]
-    partial class StorefrontDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513193335_AddCustomerOrders")]
+    partial class AddCustomerOrders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

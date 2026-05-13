@@ -85,6 +85,13 @@ public sealed class StorefrontApiClient(HttpClient httpClient) : IDisposable
         return await response.ReadJsonAsync<CheckoutResponse>();
     }
 
+    public async Task<StorefrontOrderResponse> GetOrderAsync(Guid orderId)
+    {
+        using var response = await httpClient.GetAsync($"/api/storefront/orders/{orderId:D}?brandId={DemoBrandId}");
+        await response.AssertSuccessAsync();
+        return await response.ReadJsonAsync<StorefrontOrderResponse>();
+    }
+
     public async Task<CustomerSessionResponse> RegisterAsync(string email, string password)
     {
         using var response = await httpClient.PostAsJsonAsync(
@@ -199,6 +206,15 @@ public sealed record CheckoutRequest(Guid CartId, CheckoutCustomerRequest? Custo
 public sealed record CheckoutCustomerRequest(string? DisplayName, string? Phone, string? DeliveryNote);
 
 public sealed record CheckoutResponse(Guid PaymentId, string PaymentStatus, Guid? OrderId, Guid? CorrelationId, string? FailureReason);
+
+public sealed record StorefrontOrderResponse(
+    Guid OrderId,
+    Guid BrandId,
+    string Status,
+    string? FailureReason,
+    string? PickupCode,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
 
 public sealed record RegisterCustomerRequest(string Email, string Password, string? DisplayName, string? Phone);
 

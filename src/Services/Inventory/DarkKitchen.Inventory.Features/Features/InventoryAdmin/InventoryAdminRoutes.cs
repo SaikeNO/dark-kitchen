@@ -4,7 +4,8 @@ public static class InventoryAdminRoutes
 {
     public static IEndpointRouteBuilder MapInventoryAdminEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/admin/inventory");
+        var group = app.MapGroup("/api/admin/inventory")
+            .RequireAuthorization("ops.operator");
 
         group.MapGet("/items", ListInventoryItemsEndpoint.HandleAsync);
         group.MapGet("/shortages", ListShortagesEndpoint.HandleAsync);

@@ -15,7 +15,7 @@ public sealed class EventEnvelopeContractTests
     [Fact]
     public void KnownIntegrationEventTypes_AreStableAndUnique()
     {
-        Assert.Equal(15, KnownIntegrationEventTypes.All.Count);
+        Assert.Equal(17, KnownIntegrationEventTypes.All.Count);
         Assert.Equal(KnownIntegrationEventTypes.All.Count, KnownIntegrationEventTypes.All.Distinct(StringComparer.Ordinal).Count());
         Assert.All(KnownIntegrationEventTypes.All, eventType =>
         {
@@ -308,6 +308,43 @@ public sealed class EventEnvelopeContractTests
               "payload": {
                 "orderId": "0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad",
                 "pickupCode": "A-42"
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.OrderCompleted,
+            new OrderCompleted(Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad")),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "order.completed",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "orderId": "0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"
+              }
+            }
+            """
+        },
+        {
+            KnownIntegrationEventContracts.OrderCancelled,
+            new OrderCancelled(Guid.Parse("0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad"), "customer_request"),
+            """
+            {
+              "eventId": "3f9d2a21-45bc-4fd5-870c-b3b7c1e21301",
+              "eventType": "order.cancelled",
+              "occurredAt": "2026-04-29T18:00:00+00:00",
+              "correlationId": "c7a10bb2-59fb-4b95-82e2-24b630a8b8c4",
+              "causationId": "d6bd26a2-b07a-4dd9-a27d-1de133c4d40e",
+              "schemaVersion": 1,
+              "brandId": "brand-burger-01",
+              "payload": {
+                "orderId": "0ab0f38c-d6b4-4b26-aa05-5ed6ad8515ad",
+                "reason": "customer_request"
               }
             }
             """

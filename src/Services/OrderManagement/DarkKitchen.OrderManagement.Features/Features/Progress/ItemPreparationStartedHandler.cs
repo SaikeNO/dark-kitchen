@@ -65,6 +65,7 @@ public static class ItemPreparationStartedHandler
             OrderStatus.Preparing => "Preparation started",
             OrderStatus.ReadyForPacking => "Ready for packing",
             OrderStatus.ReadyForPickup => "Ready for pickup",
+            OrderStatus.Completed => "Order completed",
             _ => status.ToString()
         };
     }
