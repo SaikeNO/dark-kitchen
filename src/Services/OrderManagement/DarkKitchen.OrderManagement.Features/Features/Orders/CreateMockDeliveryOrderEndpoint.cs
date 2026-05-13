@@ -5,33 +5,22 @@ namespace DarkKitchen.OrderManagement.Features.Features.Orders;
 public static class CreateMockDeliveryOrderEndpoint
 {
     public static Task<IResult> HandleAsync(
-        Request request,
+        MockDeliveryOrderWebhook request,
+        IDeliveryOrderAdapter adapter,
         IDbContextOutbox<OrderManagementDbContext> outbox,
         HttpContext httpContext,
         CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Platform))
+        var mapped = adapter.Map(request);
+        if (mapped.Errors.Count > 0 || mapped.Command is null)
         {
-            return Task.FromResult(ApiValidation.Problem(("platform", "Platform is required.")));
+            return Task.FromResult(ApiValidation.Problem(mapped.Errors.ToArray()));
         }
 
-        var sourceChannel = $"mock-delivery:{request.Platform.Trim().ToLowerInvariant()}";
         return CreateOrderHandler.HandleAsync(
-            new CreateOrderHandler.Command(
-                request.BrandId,
-                request.ExternalOrderId,
-                sourceChannel,
-                request.Customer,
-                request.Items),
+            mapped.Command,
             outbox,
             httpContext,
             ct);
     }
-
-    public sealed record Request(
-        string? Platform,
-        Guid BrandId,
-        string? ExternalOrderId,
-        OrderCustomerRequest? Customer,
-        IReadOnlyList<OrderItemRequest>? Items);
 }

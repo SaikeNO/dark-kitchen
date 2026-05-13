@@ -24,6 +24,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddStorefrontInfrastructure(builder.Configuration);
+builder.Services.AddScoped<IPaymentProvider, MockPaymentProvider>();
 builder.Services.AddHttpClient<OrderManagementClient>(client =>
 {
     var baseUrl = builder.Configuration["OrderManagement:BaseUrl"] ?? "http://order-management-api";

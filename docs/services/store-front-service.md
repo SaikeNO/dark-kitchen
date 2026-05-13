@@ -6,6 +6,8 @@ Storefront Service pełni rolę bramy wejściowej dla klientów końcowych. Jest
 
 ## 2. Główne Odpowiedzialności
 
+Kontrakty mock payment i przyszłych integracji płatniczych są opisane w [Kontrakty integracji płatności i delivery](../integrations/payment-and-delivery-contracts.md).
+
 ### Zarządzanie Klientem i Tożsamością (Identity)
 
 - **Rejestracja i Logowanie:** Zarządzanie kontami użytkowników, uwierzytelnianie (np. JWT) oraz autoryzacja.

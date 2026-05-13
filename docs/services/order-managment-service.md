@@ -6,6 +6,8 @@ Order Management Service (OMS) pełni funkcję centralnego hubu i orkiestratora 
 
 ## 2. Główne Odpowiedzialności
 
+Kontrakty mock delivery webhook i przyszłych adapterów platform są opisane w [Kontrakty integracji płatności i delivery](../integrations/payment-and-delivery-contracts.md).
+
 ### Ingestion & Normalization (Przyjmowanie i Mapowanie)
 
 - **Adaptery zewnętrzne:** Odbieranie webhooków z Glovo, Uber Eats czy Pyszne.pl i tłumaczenie ich różnorodnych formatów JSON na jeden wspólny standard wewnętrzny.

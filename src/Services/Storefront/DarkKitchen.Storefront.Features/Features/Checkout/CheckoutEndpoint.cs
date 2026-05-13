@@ -8,6 +8,7 @@ public static class CheckoutEndpoint
         CheckoutRequest request,
         StorefrontDbContext db,
         HttpContext httpContext,
+        IPaymentProvider paymentProvider,
         OrderManagementClient orderManagement,
         CancellationToken ct)
     {
@@ -33,9 +34,24 @@ public static class CheckoutEndpoint
         db.PaymentTransactions.Add(payment);
         await db.SaveChangesAsync(ct);
 
-        if (IsPaymentFailure(request.MockPaymentResult))
+        var initiation = await paymentProvider.InitiateAsync(
+            new PaymentInitiationRequest(
+                brand.BrandId,
+                cart.Id,
+                payment.Id,
+                cart.TotalPrice,
+                cart.Currency,
+                request.MockPaymentResult),
+            ct);
+        payment.SetExternalTransactionId(initiation.ExternalTransactionId, DateTimeOffset.UtcNow);
+
+        var confirmation = await paymentProvider.ConfirmAsync(
+            new PaymentConfirmationRequest(initiation.ExternalTransactionId, request.MockPaymentResult),
+            ct);
+
+        if (!confirmation.IsSuccess)
         {
-            payment.MarkFailed("mock_payment_failed", DateTimeOffset.UtcNow);
+            payment.MarkFailed(confirmation.FailureReason ?? "payment_failed", DateTimeOffset.UtcNow);
             await db.SaveChangesAsync(ct);
             return Results.Ok(new CheckoutResponse(payment.Id, payment.Status.ToString(), null, null, payment.FailureReason));
         }
@@ -54,12 +70,6 @@ public static class CheckoutEndpoint
         await db.SaveChangesAsync(ct);
 
         return Results.Ok(new CheckoutResponse(payment.Id, payment.Status.ToString(), order.OrderId, order.CorrelationId, null));
-    }
-
-    private static bool IsPaymentFailure(string? value)
-    {
-        return string.Equals(value, "failed", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(value, "fail", StringComparison.OrdinalIgnoreCase);
     }
 
     private static CheckoutCustomerRequest? NormalizeCustomer(CheckoutCustomerRequest? customer)

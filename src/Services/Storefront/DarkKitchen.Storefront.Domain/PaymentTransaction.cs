@@ -34,6 +34,17 @@ public sealed class PaymentTransaction
         };
     }
 
+    public void SetExternalTransactionId(string externalTransactionId, DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(externalTransactionId))
+        {
+            throw new ArgumentException("External transaction id is required.", nameof(externalTransactionId));
+        }
+
+        ExternalTransactionId = externalTransactionId.Trim();
+        UpdatedAt = now;
+    }
+
     public void MarkSuccess(Guid orderId, DateTimeOffset now)
     {
         Status = PaymentStatus.Success;

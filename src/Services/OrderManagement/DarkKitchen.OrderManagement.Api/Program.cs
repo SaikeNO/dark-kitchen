@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.AddIntegrationEventBus("order-db", DarkKitchenService.OrderManagement, typeof(OrderManagementDbContext).Assembly);
 builder.Services.AddOrderManagementInfrastructure(builder.Configuration);
+builder.Services.AddScoped<IDeliveryOrderAdapter, MockDeliveryOrderAdapter>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();

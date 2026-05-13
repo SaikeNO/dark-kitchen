@@ -57,7 +57,8 @@ public sealed class OrderManagementApiClient(HttpClient httpClient) : IDisposabl
             brandId,
             externalOrderId,
             new OrderCustomerRequest("Delivery Customer", "500300400", null),
-            [new OrderItemRequest(menuItemId, 1)]);
+            [new OrderItemRequest(menuItemId, 1)],
+            "created");
 
         return SendJsonAsync(HttpMethod.Post, "/api/mock-delivery/webhooks/orders", request, null);
     }
@@ -111,7 +112,8 @@ public sealed record MockDeliveryOrderRequest(
     Guid BrandId,
     string ExternalOrderId,
     OrderCustomerRequest? Customer,
-    IReadOnlyList<OrderItemRequest> Items);
+    IReadOnlyList<OrderItemRequest> Items,
+    string? ExternalStatus);
 
 public sealed record OrderCustomerRequest(
     string? DisplayName,
