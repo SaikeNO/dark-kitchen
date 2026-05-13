@@ -54,8 +54,8 @@ public static class IntegrationEventTopology
             [DarkKitchenService.Packing] = CreateSubscription(
                 DarkKitchenService.Packing,
                 PackingQueue,
-                KnownIntegrationEventTypes.ItemPreparationCompleted,
-                KnownIntegrationEventTypes.OrderReadyForPacking),
+                KnownIntegrationEventTypes.OrderAccepted,
+                KnownIntegrationEventTypes.ItemPreparationCompleted),
             [DarkKitchenService.Storefront] = CreateSubscription(
                 DarkKitchenService.Storefront,
                 StorefrontQueue,

@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -19,10 +21,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\DarkKitchen.Testing\DarkKitchen.Testing.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Services\Packing\DarkKitchen.Packing.Features\DarkKitchen.Packing.Features.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Services\Packing\DarkKitchen.Packing.Infrastructure\DarkKitchen.Packing.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="System.Net" />
+    <Using Include="DarkKitchen.Contracts.Events" />
     <Using Include="DarkKitchen.Testing.Aspire" />
     <Using Include="DarkKitchen.Testing.Http" />
     <Using Include="Xunit" />
