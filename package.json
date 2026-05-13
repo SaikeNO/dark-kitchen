@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
+    "demo": "dotnet run --project src/DarkKitchen.AppHost -- DarkKitchen:UsePersistentVolumes=false DarkKitchen:UseFixedWebPorts=true",
     "lint": "eslint . --max-warnings=0 && npm run typecheck",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:frontend",

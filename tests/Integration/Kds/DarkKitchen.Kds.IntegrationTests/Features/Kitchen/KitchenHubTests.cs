@@ -18,10 +18,12 @@ public sealed class KitchenHubTests(AspireAppFixture fixture) : KdsIntegrationTe
         var productId = Guid.NewGuid();
         var stationId = Guid.NewGuid();
         var otherStationId = Guid.NewGuid();
-        await SeedStationAsync(db, stationId, "GRILL");
-        await SeedStationAsync(db, otherStationId, "FRY");
+        var stationCode = $"HUB-{NewSuffix()[..6]}";
+        var otherStationCode = $"HUB-{NewSuffix()[..6]}";
+        await SeedStationAsync(db, stationId, stationCode);
+        await SeedStationAsync(db, otherStationId, otherStationCode);
         await ProductStationRoutingChangedHandler.Handle(
-            Envelope(new ProductStationRoutingChanged(productId, brandId, stationId, "GRILL"), brandId.ToString("D")),
+            Envelope(new ProductStationRoutingChanged(productId, brandId, stationId, stationCode), brandId.ToString("D")),
             db,
             CancellationToken.None);
         await OrderAcceptedHandler.CreateTicketAsync(

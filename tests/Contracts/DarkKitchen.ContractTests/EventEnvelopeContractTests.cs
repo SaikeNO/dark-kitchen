@@ -39,6 +39,18 @@ public sealed class EventEnvelopeContractTests
     }
 
     [Fact]
+    public void EventSamples_CoverEveryKnownIntegrationEventContract()
+    {
+        var sampledTypes = EventSamples.Select(row => row[0])
+            .Cast<IntegrationEventContract>()
+            .Select(contract => contract.EventType)
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.Equal(KnownIntegrationEventTypes.All.Count, sampledTypes.Count);
+        Assert.All(KnownIntegrationEventTypes.All, eventType => Assert.Contains(eventType, sampledTypes));
+    }
+
+    [Fact]
     public void IntegrationEventTopology_HasStableExchangeAndQueueNames()
     {
         Assert.Equal("dark-kitchen.events.v1.order.placed", IntegrationEventTopology.ExchangeFor(KnownIntegrationEventTypes.OrderPlaced));

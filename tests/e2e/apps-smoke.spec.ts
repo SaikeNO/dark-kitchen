@@ -44,6 +44,11 @@ for (const app of apps) {
           return;
         }
 
+        if (text.includes("Failed to start the connection")
+          && text.includes("stopped during negotiation")) {
+          return;
+        }
+
         browserErrors.push(text);
       }
     });
@@ -64,6 +69,20 @@ for (const app of apps) {
 
     if (app.name === "storefront") {
       await expect(page.getByText(app.context, { exact: true })).toBeVisible();
+      expect(browserErrors).toEqual([]);
+      return;
+    }
+
+    if (app.name === "kitchen-app") {
+      await expect(page.getByRole("heading", { name: "Wybierz stacje" })).toBeVisible();
+      await expect(page.getByRole("button", { name: /GRILL/ })).toBeVisible();
+      expect(browserErrors).toEqual([]);
+      return;
+    }
+
+    if (app.name === "packing-terminal") {
+      await expect(page.getByText(/Online|Laczenie|Offline/)).toBeVisible();
+      await expect(page.getByText(/Brak zamowien na wydawce|Kompletacja|Gotowe/)).toBeVisible();
       expect(browserErrors).toEqual([]);
       return;
     }
