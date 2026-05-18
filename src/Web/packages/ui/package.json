@@ -15,6 +15,6 @@
     "./app-shell.css": "./src/app-shell.css"
   },
   "peerDependencies": {
-    "react": "^19.2.5"
+    "react": "^19.2.6"
   }
 }
